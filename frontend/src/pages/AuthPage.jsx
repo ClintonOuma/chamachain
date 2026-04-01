@@ -38,7 +38,7 @@ function FloatingInput({ label, type = 'text', value, onChange, onBlur, error, r
         transform: active ? 'translateY(-50%)' : 'translateY(-50%)',
         fontSize: active ? '11px' : '15px',
         color: active ? '#0EA5E9' : '#64748B',
-        background: active ? '#12101f' : 'transparent',
+        background: active ? 'rgba(10, 10, 15, 0.95)' : 'transparent',
         padding: active ? '0 6px' : '0',
         transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
         pointerEvents: 'none',
@@ -127,7 +127,7 @@ function FloatingPhoneInput({ value, onChange, onBlur, error }) {
         transform: active ? 'translateY(-50%) translateY(-26px)' : 'translateY(-50%)',
         fontSize: active ? '11px' : '15px',
         color: active ? '#0EA5E9' : '#64748B',
-        background: active ? '#12101f' : 'transparent',
+        background: active ? 'rgba(10, 10, 15, 0.95)' : 'transparent',
         padding: active ? '0 6px' : '0',
         transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
         pointerEvents: 'none',
@@ -551,7 +551,7 @@ export default function AuthPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#0D0B1E',
+      background: 'linear-gradient(160deg, #000000 0%, #0a0a0f 40%, #08080c 70%, #000000 100%)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -559,19 +559,6 @@ export default function AuthPage() {
       position: 'relative',
       padding: '40px 20px',
     }}>
-      {/* Background orbs */}
-      <div style={{
-        position: 'fixed', top: '-10%', right: '-10%',
-        width: '500px', height: '500px', borderRadius: '50%',
-        background: 'radial-gradient(ellipse, rgba(139,92,246,0.18) 0%, transparent 70%)',
-        filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0,
-      }} />
-      <div style={{
-        position: 'fixed', bottom: '-10%', left: '-10%',
-        width: '500px', height: '500px', borderRadius: '50%',
-        background: 'radial-gradient(ellipse, rgba(14,165,233,0.15) 0%, transparent 70%)',
-        filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0,
-      }} />
 
       {/* Main Card */}
       <motion.div
@@ -581,7 +568,9 @@ export default function AuthPage() {
         style={{
           position: 'relative', zIndex: 10,
           width: '440px', maxWidth: '100%',
-          background: '#12101f',
+          background: 'rgba(15, 15, 20, 0.85)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '28px',
           padding: '48px 40px',
