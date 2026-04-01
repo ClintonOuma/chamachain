@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -5,15 +6,30 @@ const dotenv = require("dotenv");
 const http = require("http");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
+const { validateEnv } = require("./config/validateEnv");
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
+validateEnv();
 
 const app = express();
 
-app.use(helmet());
+// Allow SPA on another origin (e.g. Vite :5173) to read API responses
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+
+const corsOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+const front = process.env.FRONTEND_URL?.trim();
+if (front) corsOrigins.push(front);
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    origin: corsOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -47,21 +63,7 @@ const io = new Server(server, {
   },
 });
 
-const mongoUri = process.env.MONGODB_URI && process.env.MONGODB_URI.trim();
-if (mongoUri) {
-  mongoose
-    .connect(mongoUri)
-    .then(() => {
-      console.log("MongoDB connected");
-    })
-    .catch((error) => {
-      console.error("MongoDB connection error:", error.message);
-    });
-} else {
-  console.warn(
-    "MONGODB_URI is not set — start the API without DB or add MONGODB_URI to .env for auth and data features."
-  );
-}
+const mongoUri = process.env.MONGODB_URI.trim();
 
 app.get("/api/v1/health", (req, res) => {
   res.json({ success: true, message: "ChamaChain API running" });
@@ -102,6 +104,18 @@ function listenWithFallback(port, triesLeft) {
   server.listen(port);
 }
 
-listenWithFallback(startPort, MAX_PORT_TRIES);
+async function start() {
+  try {
+    mongoose.set("bufferCommands", false);
+    await mongoose.connect(mongoUri);
+    console.log("MongoDB connected");
+    listenWithFallback(startPort, MAX_PORT_TRIES);
+  } catch (error) {
+    console.error("MongoDB connection error:", error.message);
+    process.exit(1);
+  }
+}
+
+start();
 
 module.exports = { app, server, io };

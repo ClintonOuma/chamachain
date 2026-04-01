@@ -36,7 +36,7 @@ const register = async (req, res) => {
     user.refreshTokenHash = refreshTokenHash
     await user.save()
     const userObj = {
-      id: user._id,
+      id: String(user._id),
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
@@ -98,7 +98,7 @@ const verifyOTP = async (req, res) => {
     await user.save();
 
     const userObj = {
-      id: user._id,
+      id: String(user._id),
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
@@ -138,7 +138,7 @@ const login = async (req, res) => {
     user.refreshTokenHash = refreshTokenHash
     await user.save()
     const userObj = {
-      id: user._id,
+      id: String(user._id),
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,

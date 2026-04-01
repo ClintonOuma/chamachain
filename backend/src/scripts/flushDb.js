@@ -1,7 +1,8 @@
+const path = require('path')
 const dotenv = require('dotenv')
 const mongoose = require('mongoose')
 
-dotenv.config()
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') })
 
 const User = require('../models/User')
 const Membership = require('../models/Membership')

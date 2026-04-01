@@ -15,10 +15,19 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+function isPublicAuthRequest(config) {
+  const rel = config?.url || ''
+  const base = (config?.baseURL || '').replace(/\/$/, '')
+  const joined = /^https?:\/\//i.test(rel)
+    ? rel.split('?')[0]
+    : `${base}/${rel.replace(/^\//, '')}`.replace(/([^:]\/)\/+/g, '$1')
+  return /\/auth\/(login|register|verify-otp|resend-otp)(\?|$)/.test(joined)
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isPublicAuthRequest(error.config)) {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
