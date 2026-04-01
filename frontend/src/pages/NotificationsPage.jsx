@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, CheckCheck, Trash2, LayoutDashboard, Users, Wallet, CreditCard, Bot, Settings, LogOut } from 'lucide-react'
@@ -99,25 +99,44 @@ export default function NotificationsPage() {
   }
 
   const deleteNotification = async (id, e) => {
-    e.stopPropagation();
-    setNotifications(prev => prev.filter(n => n._id !== id))
-    const wasUnread = notifications.find(n => n._id === id && !n.isRead)
-    if (wasUnread) setUnreadCount(prev => Math.max(0, prev - 1))
+    e.stopPropagation()
+    setNotifications(prev => {
+      const target = prev.find(n => n._id === id)
+      if (target && !target.isRead) setUnreadCount(count => Math.max(0, count - 1))
+      return prev.filter(n => n._id !== id)
+    })
     try { await api.delete(`/notifications/${id}`) } catch (err) { console.error(err) }
   }
 
-  const filtered = activeFilter === 'all'
-    ? notifications
-    : notifications.filter(n => n.type === activeFilter)
+  const notificationRows = useMemo(
+    () => notifications.map(n => ({ ...n, createdDate: new Date(n.createdAt) })),
+    [notifications]
+  )
 
-  const grouped = {
-    Today: filtered.filter(n => isToday(new Date(n.createdAt))),
-    Yesterday: filtered.filter(n => isYesterday(new Date(n.createdAt))),
-    'This Week': filtered.filter(n => isThisWeek(new Date(n.createdAt))),
-    Earlier: filtered.filter(n => !isToday(new Date(n.createdAt)) && !isYesterday(new Date(n.createdAt)) && !isThisWeek(new Date(n.createdAt)))
-  }
+  const filtered = useMemo(
+    () => (activeFilter === 'all'
+      ? notificationRows
+      : notificationRows.filter(n => n.type === activeFilter)),
+    [activeFilter, notificationRows]
+  )
+
+  const grouped = useMemo(() => ({
+    Today: filtered.filter(n => isToday(n.createdDate)),
+    Yesterday: filtered.filter(n => isYesterday(n.createdDate)),
+    'This Week': filtered.filter(n => isThisWeek(n.createdDate)),
+    Earlier: filtered.filter(n => !isToday(n.createdDate) && !isYesterday(n.createdDate) && !isThisWeek(n.createdDate))
+  }), [filtered])
 
   const TABS = ['all', 'contribution', 'loan', 'vote', 'reminder', 'system']
+
+  const unreadCountsByTab = useMemo(() => {
+    const counts = { all: unreadCount }
+    for (const tab of TABS) {
+      if (tab === 'all') continue
+      counts[tab] = notificationRows.reduce((acc, n) => acc + (n.type === tab && !n.isRead ? 1 : 0), 0)
+    }
+    return counts
+  }, [notificationRows, unreadCount])
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0D0B1E', fontFamily: "'DM Sans', sans-serif" }}>
@@ -141,7 +160,7 @@ export default function NotificationsPage() {
         {/* SECTION 2 — Filter Tabs */}
         <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.04)', padding: 6, borderRadius: 16, width: 'fit-content', marginBottom: 32 }}>
           {TABS.map(tab => {
-            const count = tab === 'all' ? unreadCount : notifications.filter(n => n.type === tab && !n.isRead).length
+            const count = unreadCountsByTab[tab] || 0
             return (
               <button key={tab} onClick={() => setActiveFilter(tab)}
                 style={{
@@ -197,7 +216,7 @@ export default function NotificationsPage() {
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
                                 <div style={{ color: '#64748B', fontSize: 12 }}>
-                                  {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {n.createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                                 <AnimatePresence>
                                   {!n.isRead && (

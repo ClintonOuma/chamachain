@@ -23,7 +23,7 @@ export default function App() {
   const [appLoading, setAppLoading] = useState(true)
 
   useEffect(() => {
-    setTimeout(() => setAppLoading(false), 1500)
+    requestAnimationFrame(() => setAppLoading(false))
   }, [])
 
   if (appLoading) return <LoadingScreen />
