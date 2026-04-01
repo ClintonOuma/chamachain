@@ -77,11 +77,17 @@ const MONTHLY_CONTRIBS = [
   { month: 'Feb', amount: 24000 }, { month: 'Mar', amount: 20000 },
 ]
 
-// ─── TABS ─────────────────────────────────────────────────────────────────────
-
-function OverviewTab({ chama, members }) {
+const TABS = ['Overview', 'Members', 'Contributions', 'Loans', 'Votes', 'Reports']
   const topContributors = [...members].sort((a, b) => (b.totalContributed || 0) - (a.totalContributed || 0)).slice(0, 5)
   const rankColors = ['#F59E0B', '#94A3B8', '#CD7C2F', '#64748B', '#64748B']
+
+  // Mock balance history based on totalBalance
+  const totalBalance = chama?.totalBalance || 0
+  const mockHistory = [
+    { month: 'Jan', balance: Math.round(totalBalance * 0.4) },
+    { month: 'Feb', balance: Math.round(totalBalance * 0.7) },
+    { month: 'Mar', balance: totalBalance },
+  ]
 
   const score = 78
   const scoreColor = score > 80 ? '#10B981' : score > 60 ? '#F59E0B' : '#EF4444'
@@ -94,7 +100,7 @@ function OverviewTab({ chama, members }) {
         <div style={CARD}>
           <h3 style={{ fontFamily: "'Syne',sans-serif", color: '#FFF', margin: '0 0 24px 0', fontSize: 18 }}>Balance History</h3>
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={BALANCE_HISTORY}>
+            <LineChart data={mockHistory}>
               <XAxis dataKey="month" stroke="#475569" tick={{ fill: '#94A3B8', fontSize: 12 }} />
               <YAxis stroke="#475569" tick={{ fill: '#94A3B8', fontSize: 12 }} tickFormatter={v => `${v/1000}k`} />
               <Tooltip contentStyle={{ background: '#1a1625', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#FFF' }} formatter={v => [`KES ${v.toLocaleString()}`, 'Balance']} />
@@ -168,7 +174,7 @@ function OverviewTab({ chama, members }) {
   )
 }
 
-function MembersTab({ members, isAdmin, chamaId }) {
+function MembersTab({ members, membership, chamaId, user }) {
   const [query, setQuery] = useState('')
   const filtered = members.filter(m => (m.userId?.fullName || '').toLowerCase().includes(query.toLowerCase()))
 
@@ -182,28 +188,52 @@ function MembersTab({ members, isAdmin, chamaId }) {
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
-        {filtered.map((m, i) => {
-          const name = m.userId?.fullName || 'Member'
-          const role = m.role || 'Member'
-          const roleColorKey = role === 'Admin' ? 'gold' : role === 'Treasurer' ? 'blue' : 'purple'
+        {filtered.map((member, i) => {
+          const isAdmin = membership?.role === 'admin'
+          const roleColors = { admin: '#F59E0B', treasurer: '#0EA5E9', member: '#64748B', observer: '#475569' }
+          const initials = member.userId?.fullName?.split(' ').map(n => n[0]).join('').slice(0,2) || 'U'
           return (
-            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-              style={{ ...CARD, textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                <div style={{ position: 'relative' }}>
-                  <Avatar name={name} size={56} />
-                  {(m.streak || 0) > 3 && <span style={{ position: 'absolute', bottom: -4, right: -4, fontSize: 16 }}>🔥</span>}
+            <div key={i} className="glass-card" style={{ padding: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne', fontWeight: 700, color: 'white' }}>
+                  {initials}
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontFamily: 'Syne', color: '#F8FAFC', fontWeight: 600 }}>{member.userId?.fullName}</p>
+                  <span style={{ background: `${roleColors[member.role]}22`, color: roleColors[member.role], padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontFamily: 'DM Sans' }}>{member.role}</span>
                 </div>
               </div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, color: '#FFF', marginBottom: 8 }}>{name}</div>
-              <div style={{ marginBottom: 12 }}><Badge label={role} color={roleColorKey} /></div>
-              <div style={{ color: '#10B981', fontSize: 13, fontWeight: 600 }}>KES {(m.totalContributed || 0).toLocaleString()} contributed</div>
-              {isAdmin && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'center' }}>
-                  <button style={{ fontSize: 12, padding: '6px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: 'none', cursor: 'pointer' }}>Remove</button>
+              <p style={{ margin: 0, color: '#10B981', fontFamily: 'DM Sans', fontSize: '13px' }}>
+                KES {(member.totalContributed || 0).toLocaleString()} contributed
+              </p>
+              {member.contributionStreak >= 3 && <span>🔥 {member.contributionStreak} month streak</span>}
+              {isAdmin && member.userId?._id !== user?.id && (
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                  <select
+                    defaultValue={member.role}
+                    onChange={async (e) => {
+                      await api.patch(`/chamas/${chamaId}/members/${member.userId?._id}/role`, { role: e.target.value })
+                      window.location.reload()
+                    }}
+                    style={{ flex: 1, padding: '6px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    <option value="member">Member</option>
+                    <option value="treasurer">Treasurer</option>
+                    <option value="observer">Observer</option>
+                  </select>
+                  <button
+                    onClick={async () => {
+                      if (window.confirm('Remove this member?')) {
+                        await api.delete(`/chamas/${chamaId}/members/${member.userId?._id}`)
+                        // Note: ideally update local state, but instruction said reload is fine or implicit
+                        window.location.reload()
+                      }
+                    }}
+                    style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer' }}
+                  >Remove</button>
                 </div>
               )}
-            </motion.div>
+            </div>
           )
         })}
         {filtered.length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#64748B', padding: 40 }}>No members found</div>}
@@ -233,9 +263,9 @@ function ContributionsTab({ contributions, chamaId, onContribute }) {
       <div style={CARD}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
               {['Member', 'Amount', 'M-Pesa Ref', 'Date', 'Status'].map(h => (
-                <th key={h} style={{ textAlign: 'left', color: '#64748B', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 0 16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>{h}</th>
+                <th key={h} style={{ padding: '12px', textAlign: 'left', fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B', textTransform: 'uppercase' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -243,14 +273,17 @@ function ContributionsTab({ contributions, chamaId, onContribute }) {
             {contributions.length === 0 ? (
               <tr><td colSpan={5} style={{ textAlign: 'center', color: '#64748B', padding: 48 }}>No contributions yet</td></tr>
             ) : contributions.map((c, i) => (
-              <motion.tr key={i} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
-                style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
-                <td style={{ padding: '14px 0', color: '#F8FAFC', fontSize: 14 }}>{c.userId?.fullName || 'Member'}</td>
-                <td style={{ padding: '14px 0', color: '#0EA5E9', fontWeight: 700, fontSize: 14 }}>KES {(c.amount || 0).toLocaleString()}</td>
-                <td style={{ padding: '14px 0', color: '#94A3B8', fontSize: 13, fontFamily: 'monospace' }}>{c.mpesaRef || '—'}</td>
-                <td style={{ padding: '14px 0', color: '#94A3B8', fontSize: 13 }}>{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}</td>
-                <td style={{ padding: '14px 0' }}><Badge label={c.status || 'Pending'} color={STATUS_COLOR[c.status] || 'amber'} /></td>
-              </motion.tr>
+              <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                <td style={{ padding: '12px', fontFamily: 'DM Sans', color: '#F8FAFC' }}>{c.userId?.fullName || 'Unknown'}</td>
+                <td style={{ padding: '12px', fontFamily: 'Syne', color: '#10B981', fontWeight: 600 }}>KES {c.amount?.toLocaleString()}</td>
+                <td style={{ padding: '12px', fontFamily: 'DM Mono', color: '#64748B', fontSize: '12px' }}>{c.mpesaRef}</td>
+                <td style={{ padding: '12px', fontFamily: 'DM Sans', color: '#94A3B8', fontSize: '13px' }}>{new Date(c.createdAt).toLocaleDateString()}</td>
+                <td style={{ padding: '12px' }}>
+                  <span style={{ background: c.status === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)', color: c.status === 'success' ? '#10B981' : '#F59E0B', padding: '3px 10px', borderRadius: '10px', fontSize: '12px', fontFamily: 'DM Sans' }}>
+                    {c.status}
+                  </span>
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>
@@ -259,54 +292,71 @@ function ContributionsTab({ contributions, chamaId, onContribute }) {
   )
 }
 
-function LoansTab({ loans, isAdmin, chamaId }) {
-  const riskColor = r => r === 'Low' ? 'green' : r === 'Medium' ? 'amber' : 'red'
-  const statusColor = s => ({ approved: 'green', pending: 'amber', rejected: 'red', active: 'blue' })[s] || 'gray'
+function LoansTab({ loans, myLoans, membership, chamaId }) {
+  const displayLoans = membership?.role === 'admin' || membership?.role === 'treasurer' ? loans : myLoans
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
         <button style={BTN_PRIMARY}><Plus size={16} />Request Loan</button>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {loans.length === 0 ? (
+        {displayLoans.length === 0 ? (
           <div style={{ ...CARD, textAlign: 'center', padding: 48 }}>
             <CreditCard size={48} style={{ color: '#0EA5E9', marginBottom: 16, opacity: 0.5 }} />
             <div style={{ color: '#FFF', fontFamily: "'Syne',sans-serif", marginBottom: 8 }}>No loans yet</div>
             <div style={{ color: '#64748B', fontSize: 14 }}>Request a loan to get started</div>
           </div>
-        ) : loans.map((loan, i) => {
-          const pct = loan.totalRepayable ? ((loan.amountRepaid || 0) / loan.totalRepayable * 100) : 0
+        ) : displayLoans.map((loan, i) => {
+          const totalRepaid = loan.repayments?.reduce((s, r) => s + r.amount, 0) || 0
+          const progress = Math.min((totalRepaid / loan.totalRepayable) * 100, 100)
+          const isAdmin = membership?.role === 'admin'
           return (
-            <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} style={CARD}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+            <div key={i} className="glass-card" style={{ padding: '20px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div>
-                  <div style={{ fontFamily: "'Syne',sans-serif", color: '#FFF', fontWeight: 700, fontSize: 18, marginBottom: 6 }}>{loan.userId?.fullName || 'Member'}</div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <Badge label={loan.purpose || 'General'} color="purple" />
-                    <Badge label={loan.status || 'Pending'} color={statusColor(loan.status)} />
-                    <Badge label={`${loan.riskLevel || 'Low'} Risk`} color={riskColor(loan.riskLevel)} />
+                  <p style={{ margin: 0, fontFamily: 'Syne', color: '#F8FAFC', fontWeight: 600 }}>KES {loan.amount?.toLocaleString()}</p>
+                  <p style={{ margin: '4px 0 0', fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8' }}>{loan.purpose} · {loan.repaymentMonths} months</p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ background: loan.riskLabel === 'low' ? 'rgba(16,185,129,0.15)' : loan.riskLabel === 'medium' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)', color: loan.riskLabel === 'low' ? '#10B981' : loan.riskLabel === 'medium' ? '#F59E0B' : '#EF4444', padding: '3px 10px', borderRadius: '10px', fontSize: '12px' }}>
+                    {loan.riskLabel} risk
+                  </span>
+                  <span style={{ background: 'rgba(14,165,233,0.15)', color: '#0EA5E9', padding: '3px 10px', borderRadius: '10px', fontSize: '12px' }}>
+                    {loan.status}
+                  </span>
+                </div>
+              </div>
+              {loan.status === 'disbursed' && (
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '12px', color: '#64748B', fontFamily: 'DM Sans' }}>Repayment Progress</span>
+                    <span style={{ fontSize: '12px', color: '#0EA5E9', fontFamily: 'DM Sans' }}>KES {totalRepaid.toLocaleString()} / {loan.totalRepayable?.toLocaleString()}</span>
+                  </div>
+                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.1)' }}>
+                    <div style={{ height: '100%', borderRadius: '3px', background: '#0EA5E9', width: `${progress}%`, transition: 'width 0.5s ease' }} />
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 24, fontWeight: 700, color: '#0EA5E9' }}>KES {(loan.amount || 0).toLocaleString()}</div>
-                  <div style={{ color: '#64748B', fontSize: 12 }}>Total repayable: KES {(loan.totalRepayable || 0).toLocaleString()}</div>
-                </div>
-              </div>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 12, marginBottom: 6 }}>
-                  <span>Repayment progress</span><span>{Math.round(pct)}%</span>
-                </div>
-                <div style={{ height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4 }}>
-                  <div style={{ height: '100%', width: `${pct}%`, background: '#10B981', borderRadius: 4, transition: 'width 1s ease' }} />
-                </div>
-              </div>
+              )}
               {isAdmin && loan.status === 'pending' && (
-                <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                  <button style={{ ...BTN_PRIMARY, background: '#10B981', boxShadow: '0 0 20px rgba(16,185,129,0.3)', flex: 1, justifyContent: 'center' }}><CheckCircle2 size={16} /> Approve</button>
-                  <button style={{ ...BTN_PRIMARY, background: '#EF4444', boxShadow: '0 0 20px rgba(239,68,68,0.3)', flex: 1, justifyContent: 'center' }}><XCircle size={16} /> Reject</button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={async () => {
+                      await api.patch(`/loans/${chamaId}/loans/${loan._id}/approve`)
+                      window.location.reload()
+                    }}
+                    style={{ flex: 1, padding: '8px', borderRadius: '8px', background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)', cursor: 'pointer', fontFamily: 'DM Sans' }}
+                  >✓ Approve</button>
+                  <button
+                    onClick={async () => {
+                      await api.patch(`/loans/${chamaId}/loans/${loan._id}/reject`)
+                      window.location.reload()
+                    }}
+                    style={{ flex: 1, padding: '8px', borderRadius: '8px', background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer', fontFamily: 'DM Sans' }}
+                  >✗ Reject</button>
                 </div>
               )}
-            </motion.div>
+            </div>
           )
         })}
       </div>
@@ -452,58 +502,59 @@ function ModalWrap({ onClose, title, children }) {
   )
 }
 
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
-
 const TABS = ['Overview', 'Members', 'Contributions', 'Loans', 'Votes', 'Reports']
 
 export default function ChamaDetailPage() {
   const { chamaId } = useParams()
-  const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
-
+  const { user } = useAuthStore()
   const [chama, setChama] = useState(null)
   const [members, setMembers] = useState([])
   const [contributions, setContributions] = useState([])
   const [loans, setLoans] = useState([])
-  const [votes, setVotes] = useState([])
+  const [myLoans, setMyLoans] = useState([])
+  const [membership, setMembership] = useState(null)
+  const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState(0)
-  const [showContribute, setShowContribute] = useState(false)
-
-  const myMembership = members.find(m => String(m.userId?._id || m.userId) === String(user?._id))
-  const isAdmin = myMembership?.role === 'Admin' || myMembership?.role === 'Treasurer'
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAll = async () => {
+      setLoading(true)
       try {
-        const [chamaRes, membersRes] = await Promise.all([
-          api.get(`/chamas/${chamaId}`).catch(() => ({ data: { chama: null } })),
-          api.get(`/chamas/${chamaId}/members`).catch(() => ({ data: { members: [] } })),
+        const [chamaRes, membersRes, contribRes] = await Promise.all([
+          api.get(`/chamas/${chamaId}`),
+          api.get(`/chamas/${chamaId}/members`),
+          api.get(`/contributions/${chamaId}`)
         ])
         setChama(chamaRes.data.chama)
         setMembers(membersRes.data.members || [])
+        setContributions(contribRes.data.contributions || [])
+
+        // Find current user membership
+        const myMembership = membersRes.data.members?.find(
+          m => m.userId?._id === user?.id || m.userId?._id === user?._id
+        )
+        setMembership(myMembership)
+
+        // Fetch loans based on role
+        try {
+          if (myMembership?.role === 'admin' || myMembership?.role === 'treasurer') {
+            const loansRes = await api.get(`/loans/${chamaId}`)
+            setLoans(loansRes.data.loans || [])
+          } else {
+            const myLoansRes = await api.get(`/loans/${chamaId}/my`)
+            setMyLoans(myLoansRes.data.loans || [])
+          }
+        } catch (e) { console.error('Loans fetch:', e) }
       } catch (err) {
-        console.error(err)
+        console.error('ChamaDetail fetch error:', err)
       } finally {
         setLoading(false)
       }
     }
-    fetchData()
+    if (chamaId) fetchAll()
   }, [chamaId])
 
-  useEffect(() => {
-    if (activeTab === 2) {
-      api.get(`/contributions/${chamaId}`).then(r => setContributions(r.data.contributions || [])).catch(() => {})
-    }
-    if (activeTab === 3) {
-      api.get(`/loans/${chamaId}`).then(r => setLoans(r.data.loans || [])).catch(() => {})
-    }
-    if (activeTab === 4) {
-      api.get(`/loans/${chamaId}`).then(r => setVotes((r.data.loans || []).filter(l => l.status === 'pending'))).catch(() => {})
-    }
-  }, [activeTab, chamaId])
-
-  const balance = chama?.balance || 0
+  const balance = chama?.totalBalance || 0
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0D0B1E', fontFamily: "'DM Sans',sans-serif" }}>
@@ -536,33 +587,36 @@ export default function ChamaDetailPage() {
             <div style={{ textAlign: 'right' }}>
               <div style={{ color: '#64748B', fontSize: 13, marginBottom: 4 }}>Group Balance</div>
               <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 36, fontWeight: 700, color: '#0EA5E9' }}>KES {balance.toLocaleString()}</div>
-              {myMembership && <Badge label={myMembership.role || 'Member'} color={myMembership.role === 'Admin' ? 'gold' : myMembership.role === 'Treasurer' ? 'blue' : 'purple'} />}
+              {membership && <Badge label={membership.role || 'Member'} color={membership.role === 'Admin' ? 'gold' : membership.role === 'Treasurer' ? 'blue' : 'purple'} />}
             </div>
           </div>
         </div>
 
         {/* Tab bar */}
         <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 4, marginBottom: 36, width: 'fit-content' }}>
-          {TABS.map((tab, i) => (
-            <button key={i} onClick={() => setActiveTab(i)} style={{
-              padding: '10px 22px', borderRadius: 10, border: 'none', cursor: 'pointer',
-              fontFamily: "'DM Sans',sans-serif", fontSize: 14, fontWeight: activeTab === i ? 700 : 500,
-              background: activeTab === i ? '#0EA5E9' : 'transparent',
-              color: activeTab === i ? '#FFF' : '#94A3B8',
-              transition: 'all 0.2s ease'
-            }}>{tab}</button>
-          ))}
+          {TABS.map((tab, i) => {
+            const tabId = tab.toLowerCase()
+            return (
+              <button key={i} onClick={() => setActiveTab(tabId)} style={{
+                padding: '10px 22px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                fontFamily: "'DM Sans',sans-serif", fontSize: 14, fontWeight: activeTab === tabId ? 700 : 500,
+                background: activeTab === tabId ? '#0EA5E9' : 'transparent',
+                color: activeTab === tabId ? '#FFF' : '#94A3B8',
+                transition: 'all 0.2s ease'
+              }}>{tab}</button>
+            )
+          })}
         </div>
 
         {/* Tab Content */}
         <AnimatePresence mode="wait">
           <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-            {activeTab === 0 && <OverviewTab chama={chama} members={members} />}
-            {activeTab === 1 && <MembersTab members={members} isAdmin={isAdmin} chamaId={chamaId} />}
-            {activeTab === 2 && <ContributionsTab contributions={contributions} chamaId={chamaId} onContribute={() => setShowContribute(true)} />}
-            {activeTab === 3 && <LoansTab loans={loans} isAdmin={isAdmin} chamaId={chamaId} />}
-            {activeTab === 4 && <VotesTab votes={votes} userId={user?._id} />}
-            {activeTab === 5 && <ReportsTab />}
+            {activeTab === 'overview' && <OverviewTab chama={chama} members={members} />}
+            {activeTab === 'members' && <MembersTab members={members} membership={membership} chamaId={chamaId} user={user} />}
+            {activeTab === 'contributions' && <ContributionsTab contributions={contributions} chamaId={chamaId} onContribute={() => setShowContribute(true)} />}
+            {activeTab === 'loans' && <LoansTab loans={loans} myLoans={myLoans} membership={membership} chamaId={chamaId} />}
+            {activeTab === 'votes' && <VotesTab votes={loans.filter(l => l.status === 'pending')} userId={user?._id} />}
+            {activeTab === 'reports' && <ReportsTab />}
           </motion.div>
         </AnimatePresence>
 
