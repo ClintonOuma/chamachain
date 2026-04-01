@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Building2, CreditCard,
-  Landmark, Bot, Bell, Settings, LogOut, ChevronRight
+  Landmark, Bot, Bell, Settings, LogOut, ChevronRight, User
 } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 
@@ -42,6 +42,7 @@ export default function Sidebar({ unreadCount = 0 }) {
   const avatarGradient = avatarColors[(user?.fullName?.charCodeAt(0) || 0) % avatarColors.length]
 
   return (
+    <>
     <div
       className="sidebar glass-sidebar"
       style={{
@@ -302,5 +303,34 @@ export default function Sidebar({ unreadCount = 0 }) {
         </motion.div>
       </div>
     </div>
+
+    {/* Mobile Bottom Tab Bar */}
+    <div className="bottom-tab-bar">
+      {[
+        { icon: LayoutDashboard, path: '/dashboard', label: 'Home' },
+        { icon: Building2, path: '/chamas', label: 'Chamas' },
+        { icon: Landmark, path: '/loans', label: 'Loans' },
+        { icon: Bot, path: '/ai-coach', label: 'AI' },
+        { icon: Settings, path: '/profile', label: 'Profile' },
+      ].map((item) => {
+        const isActive = location.pathname === item.path
+        const Icon = item.icon
+        return (
+          <div
+            key={item.path}
+            onClick={() => navigate(item.path)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              gap: '4px', cursor: 'pointer', padding: '8px 16px',
+              color: isActive ? '#0EA5E9' : '#64748B'
+            }}
+          >
+            <Icon size={20} />
+            <span style={{ fontSize: '10px', fontFamily: 'DM Sans' }}>{item.label}</span>
+          </div>
+        )
+      })}
+    </div>
+  </>
   )
 }

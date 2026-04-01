@@ -56,7 +56,7 @@ import { useState, useEffect } from 'react'
      <div style={{ display: 'flex', minHeight: '100vh', background: '#0D0B1E' }}> 
        <div className="mesh-bg" /> 
        <Sidebar /> 
-       <main style={{ marginLeft: '240px', flex: 1, padding: '32px', position: 'relative', zIndex: 1 }}> 
+       <main className="main-content" style={{ marginLeft: '240px', flex: 1, padding: '32px', position: 'relative', zIndex: 1 }}> 
          <div style={{ marginBottom: '32px' }}> 
            <h1 style={{ fontFamily: 'Syne', fontSize: '28px', color: '#F8FAFC', margin: 0 }}>My Contributions</h1> 
            <p style={{ color: '#64748B', fontFamily: 'DM Sans', marginTop: '4px' }}>Track all your savings across chamas</p> 

@@ -290,14 +290,39 @@ input::placeholder { color: var(--text-tertiary); }
   border-radius: var(--radius-md);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   box-shadow: 
     var(--specular-top),
-    0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--glass-border);
+    0 4px 16px rgba(0, 0, 0, 0.25);
 }
+
+/* Mobile responsive */ 
+ @media (max-width: 768px) { 
+   .sidebar { display: none !important; } 
+   .main-content { margin-left: 0 !important; padding: 16px !important; padding-bottom: 80px !important; } 
+   .stats-grid { grid-template-columns: repeat(2, 1fr) !important; } 
+   .chama-grid { grid-template-columns: 1fr !important; } 
+ } 
+ 
+ /* Bottom tab bar for mobile */ 
+ .bottom-tab-bar { 
+   display: none; 
+   position: fixed; 
+   bottom: 0; 
+   left: 0; 
+   right: 0; 
+   height: 64px; 
+   background: rgba(13, 11, 30, 0.95); 
+   backdrop-filter: blur(20px); 
+   border-top: 1px solid rgba(255,255,255,0.08); 
+   z-index: 200; 
+   justify-content: space-around; 
+   align-items: center; 
+   padding: 0 8px; 
+ } 
+ 
+ @media (max-width: 768px) { 
+   .bottom-tab-bar { display: flex; } 
+ } 
 
 .pill-badge {
   font-size: 11px;
@@ -336,28 +361,7 @@ input::placeholder { color: var(--text-tertiary); }
   .content-grid { grid-template-columns: 1fr !important; }
 }
 
-@media (max-width: 768px) {
-  .sidebar { display: none !important; }
-  .main-content { 
-    margin-left: 0 !important; 
-    padding: 20px !important; 
-    padding-bottom: 90px !important; 
-  }
-  .bottom-nav {
-    display: flex; 
-    position: fixed; 
-    bottom: 0; 
-    left: 0; 
-    right: 0;
-    background: rgba(10, 10, 15, 0.92);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-top: 1px solid var(--glass-border);
-    z-index: 50;
-  }
-  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-  .quick-actions-grid { grid-template-columns: repeat(2, 1fr) !important; }
-}
+/* Existing mobile nav styles moved to bottom-tab-bar */
 
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr !important; }

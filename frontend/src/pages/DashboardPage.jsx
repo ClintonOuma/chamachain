@@ -386,7 +386,7 @@ export default function DashboardPage() {
         style={{
           marginLeft: '240px',
           flex: 1,
-          padding: '36px 40px',
+          padding: '32px',
           position: 'relative',
           zIndex: 1,
           overflowY: 'auto',
