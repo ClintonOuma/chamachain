@@ -1,4 +1,4 @@
-const path = require("path");
+﻿const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -68,6 +68,9 @@ app.use('/api/v1/notifications', notificationRoutes);
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/v1/users', userRoutes);
 
+const aiRoutes = require('./routes/aiRoutes');
+app.use('/api/v1/ai', aiRoutes);
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -132,3 +135,4 @@ async function start() {
 start();
 
 module.exports = { app, server, io };
+
