@@ -2,7 +2,7 @@
 
 ## Deployed login / signup checklist
 
-Your repo does **not** store public API or frontend URLs — those live only in your host’s settings.
+**Frontend (Render static site):** root `frontend`, build `npm run build`, output `dist`. The default production API origin is in `frontend/.env.production` (`VITE_API_URL`). You can still override with the same key in the Render **Environment** UI.
 
 ### Backend (Railway, Render, etc.)
 
@@ -15,12 +15,12 @@ Set:
 
 Set `trust proxy` is enabled for reverse proxies (Railway, etc.).
 
-### Frontend (Vercel, Netlify, etc.)
+### Frontend (Vercel, Netlify, Render, etc.)
 
-At **build** time, set:
+At **build** time, set (or rely on `frontend/.env.production` in this repo):
 
 - `VITE_API_URL` = public **origin of your API only** (no `/api/v1`, no trailing slash).  
-  Example: `https://your-service.up.railway.app`
+  This project’s deployed API: `https://chamachain-backend.onrender.com`
 
 If the host strips env vars or you cannot rebuild, edit `frontend/public/runtime-config.js`, uncomment the sample line, set the same URL, redeploy.
 
