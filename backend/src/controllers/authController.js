@@ -12,6 +12,20 @@ const register = async (req, res) => {
     if (!fullName || !email || !phone || !password) {
       return res.status(400).json({ success: false, message: 'All fields are required' })
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/ 
+    const phoneRegex = /^\+254[17]\d{8}$/ 
+ 
+    if (!emailRegex.test(email)) { 
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address' }) 
+    } 
+    if (!phoneRegex.test(phone)) { 
+      return res.status(400).json({ success: false, message: 'Please enter a valid Kenyan phone number (+254...)' }) 
+    } 
+    if (password.length < 8) { 
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' }) 
+    }
+
     const normalizedEmail = String(email).toLowerCase().trim()
     const normalizedPhone = String(phone).trim()
     const normalizedFullName = String(fullName).trim()

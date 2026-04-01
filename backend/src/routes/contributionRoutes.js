@@ -7,8 +7,9 @@ const {
   getMyContributions,
   getContributionSummary
 } = require('../controllers/contributionController');
+const { contributionLimiter } = require('../middleware/rateLimiter');
 
-router.post('/initiate', protect, initiateContribution);
+router.post('/initiate', protect, contributionLimiter, initiateContribution);
 router.get('/:chamaId', protect, getContributions);
 router.get('/:chamaId/my', protect, getMyContributions);
 router.get('/:chamaId/summary', protect, getContributionSummary);

@@ -8,6 +8,7 @@ const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 const { validateEnv } = require("./config/validateEnv");
 const { startCronJobs } = require('./services/cronService');
+const { generalLimiter } = require('./middleware/rateLimiter');
 
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 validateEnv();
@@ -50,6 +51,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use('/api/', generalLimiter);
 
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/v1/auth', authRoutes);
