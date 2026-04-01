@@ -1,37 +1,39 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { Plus, Wallet, Shield, Check, Users, ShieldCheck, ChevronRight, Activity, Bell, FileText, ArrowRight, Home, CreditCard, LayoutDashboard, Bot, Settings, Loader2, TrendingUp, Star, X, ChevronDown } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
 
-// Internal UI Components
+// ─── Floating Label Input ───────────────────────────────────────────────────
 function FloatingInput({ label, type = 'text', value, onChange, error }) {
   const [focused, setFocused] = useState(false)
   const active = focused || value.toString().length > 0
 
   return (
-    <div style={{ position: 'relative', marginBottom: '20px' }}>
+    <div style={{ position: 'relative', marginBottom: '24px' }}>
       <div style={{
-        position: 'absolute', inset: 0, borderRadius: '14px',
-        border: `1px solid ${error ? '#EF4444' : active ? '#0EA5E9' : 'rgba(255,255,255,0.12)'}`,
-        pointerEvents: 'none', transition: 'border-color 0.2s ease'
+        position: 'absolute', inset: 0, borderRadius: '16px',
+        border: `1px solid ${error ? 'rgba(255,69,58,0.6)' : active ? 'rgba(62,173,255,0.50)' : 'rgba(255,255,255,0.12)'}`,
+        pointerEvents: 'none', transition: 'border-color 0.2s ease',
+        background: active ? 'rgba(62,173,255,0.04)' : 'transparent',
+        boxShadow: active ? '0 0 0 3px rgba(62,173,255,0.10)' : 'none',
       }} />
       <label style={{
-        position: 'absolute', left: '14px',
+        position: 'absolute', left: '16px',
         top: active ? '0px' : '50%',
         transform: active ? 'translateY(-50%)' : 'translateY(-50%)',
-        fontSize: active ? '11px' : '15px',
-        color: active ? '#0EA5E9' : '#64748B',
-        background: active ? '#12101f' : 'transparent',
+        fontSize: active ? '10px' : '14px',
+        color: active ? 'rgba(62,173,255,0.9)' : 'rgba(255,255,255,0.35)',
+        background: active ? '#0a0d16' : 'transparent',
         padding: active ? '0 6px' : '0',
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         pointerEvents: 'none', zIndex: 2,
-        fontFamily: 'DM Sans, sans-serif',
-        letterSpacing: active ? '0.05em' : '0',
-        textTransform: active ? 'uppercase' : 'none'
+        fontFamily: 'inherit',
+        letterSpacing: active ? '0.06em' : '0',
+        textTransform: active ? 'uppercase' : 'none',
+        fontWeight: active ? 600 : 400,
       }}>
         {label}
       </label>
@@ -41,13 +43,13 @@ function FloatingInput({ label, type = 'text', value, onChange, error }) {
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
           width: '100%', background: 'transparent', border: 'none', outline: 'none',
-          color: '#F8FAFC', fontSize: '15px', padding: '16px',
-          fontFamily: 'DM Sans, sans-serif', position: 'relative', zIndex: 1,
-          boxSizing: 'border-box'
+          color: 'rgba(255,255,255,0.92)', fontSize: '15px', padding: '18px 16px',
+          fontFamily: 'inherit', position: 'relative', zIndex: 1, boxSizing: 'border-box',
+          letterSpacing: '-0.01em',
         }}
       />
       {error && (
-        <p style={{ color: '#EF4444', fontSize: '11px', marginTop: '4px', paddingLeft: '4px', position: 'absolute', bottom: '-18px' }}>
+        <p style={{ color: 'rgba(255,69,58,0.9)', fontSize: '11px', marginTop: '6px', paddingLeft: '4px', position: 'absolute', bottom: '-18px' }}>
           {error}
         </p>
       )}
@@ -55,36 +57,40 @@ function FloatingInput({ label, type = 'text', value, onChange, error }) {
   )
 }
 
+// ─── Floating Phone Input ────────────────────────────────────────────────────
 function FloatingPhoneInput({ value, onChange, error }) {
   const [focused, setFocused] = useState(false)
   const active = focused || value.length > 0
 
   return (
-    <div style={{ position: 'relative', marginBottom: '20px' }}>
+    <div style={{ position: 'relative', marginBottom: '24px' }}>
       <div style={{
-        position: 'absolute', inset: 0, borderRadius: '14px',
-        border: `1px solid ${error ? '#EF4444' : active ? '#0EA5E9' : 'rgba(255,255,255,0.12)'}`,
-        pointerEvents: 'none', transition: 'border-color 0.2s ease'
+        position: 'absolute', inset: 0, borderRadius: '16px',
+        border: `1px solid ${error ? 'rgba(255,69,58,0.6)' : active ? 'rgba(62,173,255,0.50)' : 'rgba(255,255,255,0.12)'}`,
+        pointerEvents: 'none', transition: 'border-color 0.2s ease',
+        background: active ? 'rgba(62,173,255,0.04)' : 'transparent',
+        boxShadow: active ? '0 0 0 3px rgba(62,173,255,0.10)' : 'none',
       }} />
       <label style={{
-        position: 'absolute', left: '14px',
+        position: 'absolute', left: '16px',
         top: active ? '0px' : '50%',
-        transform: active ? 'translateY(-50%) translateY(-26px)' : 'translateY(-50%)',
-        fontSize: active ? '11px' : '15px',
-        color: active ? '#0EA5E9' : '#64748B',
-        background: active ? '#12101f' : 'transparent',
+        transform: active ? 'translateY(-50%) translateY(-28px)' : 'translateY(-50%)',
+        fontSize: active ? '10px' : '14px',
+        color: active ? 'rgba(62,173,255,0.9)' : 'rgba(255,255,255,0.35)',
+        background: active ? '#0a0d16' : 'transparent',
         padding: active ? '0 6px' : '0',
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        pointerEvents: 'none', zIndex: 2, fontFamily: 'DM Sans, sans-serif',
-        letterSpacing: active ? '0.05em' : '0', textTransform: active ? 'uppercase' : 'none'
+        pointerEvents: 'none', zIndex: 2, fontFamily: 'inherit',
+        letterSpacing: active ? '0.06em' : '0', textTransform: active ? 'uppercase' : 'none',
+        fontWeight: active ? 600 : 400,
       }}>
         Phone Number
       </label>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '16px', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '18px 16px', gap: '10px' }}>
         {active && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, animation: 'fadeIn 0.2s ease' }}>
-            <span style={{ color: '#F8FAFC', fontSize: '15px', fontFamily: 'DM Sans', fontWeight: 500 }}>🇰🇪 +254</span>
-            <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.2)' }} />
+            <span style={{ color: 'rgba(255,255,255,0.88)', fontSize: '14px', fontFamily: 'inherit', fontWeight: 500 }}>🇰🇪 +254</span>
+            <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.15)' }} />
           </div>
         )}
         <input
@@ -97,52 +103,94 @@ function FloatingPhoneInput({ value, onChange, error }) {
           placeholder={active ? '7XX XXX XXX' : ''}
           style={{
             flex: 1, background: 'transparent', border: 'none', outline: 'none',
-            color: '#F8FAFC', fontSize: '15px', fontFamily: 'DM Sans, sans-serif',
-            padding: 0, zIndex: 1
+            color: 'rgba(255,255,255,0.92)', fontSize: '15px', fontFamily: 'inherit', padding: 0, zIndex: 1,
           }}
         />
       </div>
       {error && (
-        <p style={{ color: '#EF4444', fontSize: '11px', marginTop: '4px', paddingLeft: '4px', position: 'absolute', bottom: '-18px' }}>{error}</p>
+        <p style={{ color: 'rgba(255,69,58,0.9)', fontSize: '11px', marginTop: '4px', paddingLeft: '4px', position: 'absolute', bottom: '-18px' }}>{error}</p>
       )}
     </div>
   )
 }
 
+// ─── Animated Counter ────────────────────────────────────────────────────────
 function AnimatedNumber({ value, prefix = '' }) {
   const [displayVal, setDisplayVal] = useState(0)
-  
   useEffect(() => {
     let start = performance.now()
-    const duration = 1000 // 1s
+    const duration = 1200
     const numValue = Number(value) || 0
     if (numValue === 0) return setDisplayVal(0)
-
     const animate = (currentTime) => {
       const elapsed = currentTime - start
       const progress = Math.min(elapsed / duration, 1)
-      const easeOut = 1 - Math.pow(1 - progress, 3) 
+      const easeOut = 1 - Math.pow(1 - progress, 3)
       setDisplayVal(Math.floor(easeOut * numValue))
-      
       if (progress < 1) requestAnimationFrame(animate)
     }
     requestAnimationFrame(animate)
   }, [value])
-
   return <span>{prefix}{displayVal.toLocaleString()}</span>
 }
 
+// ─── Bottom Nav Items ─────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'chamas', label: 'Chamas', icon: Home },
   { id: 'contributions', label: 'Contrib', icon: Wallet },
   { id: 'loans', label: 'Loans', icon: CreditCard },
   { id: 'ai', label: 'AI', icon: Bot },
-  { id: 'settings', label: 'Profile', icon: Settings }
+  { id: 'settings', label: 'Profile', icon: Settings },
 ]
 
+// ─── Glass Modal Container ───────────────────────────────────────────────────
+function GlassModal({ children, onClose }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(6, 9, 18, 0.65)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+        }}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 20 }}
+        transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+        style={{
+          position: 'relative',
+          width: '420px',
+          maxWidth: '92%',
+          background: 'rgba(14, 18, 36, 0.82)',
+          backdropFilter: 'blur(60px)',
+          WebkitBackdropFilter: 'blur(60px)',
+          borderRadius: '28px',
+          padding: '36px',
+          border: '1px solid rgba(255,255,255,0.14)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22), 0 32px 80px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Shimmer top line */}
+        <div style={{
+          position: 'absolute', top: 0, left: '20%', right: '20%', height: '1px',
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)',
+          borderRadius: '28px 28px 0 0',
+        }} />
+        {children}
+      </motion.div>
+    </div>
+  )
+}
 
-
+// ─── Main Dashboard ──────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
@@ -151,15 +199,12 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [activeNav, setActiveNav] = useState('dashboard')
-  
   const [showCreateChama, setShowCreateChama] = useState(false)
   const [showContribute, setShowContribute] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // Forms
   const [newChama, setNewChama] = useState({ name: '', description: '' })
   const [modalLoading, setModalLoading] = useState(false)
-  
   const [contribData, setContribData] = useState({
     chamaId: '',
     amount: '',
@@ -197,7 +242,7 @@ export default function DashboardPage() {
       setNewChama({ name: '', description: '' })
     } catch (err) {
       console.error(err)
-      alert("Error creating chama")
+      alert('Error creating chama')
     } finally {
       setModalLoading(false)
     }
@@ -220,7 +265,7 @@ export default function DashboardPage() {
       }, 3000)
     } catch (err) {
       console.error(err)
-      alert("Error initiating contribution")
+      alert('Error initiating contribution')
     } finally {
       setModalLoading(false)
     }
@@ -232,123 +277,349 @@ export default function DashboardPage() {
   }
 
   const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-  
-  // Fake calculated stats since endpoint might not exist
-  const totalSavings = chamas.reduce((acc, c) => acc + (c.balance || 0), 0) + 125000 // padding for demo
+  const totalSavings = chamas.reduce((acc, c) => acc + (c.balance || 0), 0) + 125000
   const activeLoansCount = 2
   const creditScore = 740
 
+  const statsData = [
+    {
+      label: 'Total Savings',
+      val: totalSavings,
+      pre: 'KES ',
+      icon: TrendingUp,
+      accentColor: '#30D158',
+      glowColor: 'rgba(48,209,88,0.18)',
+      borderColor: 'rgba(48,209,88,0.22)',
+      iconBg: 'rgba(48,209,88,0.12)',
+    },
+    {
+      label: 'Active Loans',
+      val: activeLoansCount,
+      pre: '',
+      icon: CreditCard,
+      accentColor: '#3EADFF',
+      glowColor: 'rgba(62,173,255,0.18)',
+      borderColor: 'rgba(62,173,255,0.22)',
+      iconBg: 'rgba(62,173,255,0.12)',
+    },
+    {
+      label: 'My Chamas',
+      val: chamas.length,
+      pre: '',
+      icon: Users,
+      accentColor: '#6E6AFF',
+      glowColor: 'rgba(110,106,255,0.18)',
+      borderColor: 'rgba(110,106,255,0.22)',
+      iconBg: 'rgba(110,106,255,0.12)',
+    },
+    {
+      label: 'Credit Score',
+      val: creditScore,
+      pre: '',
+      icon: Star,
+      accentColor: '#FFD60A',
+      glowColor: 'rgba(255,214,10,0.15)',
+      borderColor: 'rgba(255,214,10,0.22)',
+      iconBg: 'rgba(255,214,10,0.10)',
+    },
+  ]
+
+  const quickActions = [
+    { label: 'Contribute', icon: Wallet, accentColor: '#30D158', glowColor: 'rgba(48,209,88,0.25)', action: () => setShowContribute(true) },
+    { label: 'Request Loan', icon: CreditCard, accentColor: '#3EADFF', glowColor: 'rgba(62,173,255,0.25)', action: () => alert('Loans coming soon') },
+    { label: 'Invite Member', icon: Users, accentColor: '#6E6AFF', glowColor: 'rgba(110,106,255,0.25)', action: () => alert('Invites coming soon') },
+    { label: 'View Reports', icon: TrendingUp, accentColor: '#FFD60A', glowColor: 'rgba(255,214,10,0.20)', action: () => alert('Reports coming soon') },
+  ]
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0D0B1E', fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{
+      display: 'flex',
+      minHeight: '100vh',
+      background: 'var(--bg-base)',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "DM Sans", sans-serif',
+    }}>
       <div className="mesh-bg" />
       <Sidebar unreadCount={unreadCount} />
-      
-      <main className="main-content" style={{ marginLeft: '240px', flex: 1, padding: '32px', position: 'relative', zIndex: 1, overflowY: 'auto' }}>
-        
-        {/* Section 1 - Top Bar */}
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' }}>
+
+      <main
+        className="main-content"
+        style={{
+          marginLeft: '240px',
+          flex: 1,
+          padding: '36px 40px',
+          position: 'relative',
+          zIndex: 1,
+          overflowY: 'auto',
+          minHeight: '100vh',
+        }}
+      >
+        {/* ── Header ── */}
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '44px' }}>
           <div>
-            <motion.h1 
-              initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-              style={{ fontFamily: "'Syne', sans-serif", fontSize: '28px', color: '#FFF', margin: '0 0 8px 0', fontWeight: 700 }}
+            <motion.h1
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                fontSize: '30px',
+                fontWeight: 700,
+                color: 'rgba(255,255,255,0.95)',
+                margin: '0 0 6px 0',
+                letterSpacing: '-0.03em',
+                lineHeight: 1.2,
+              }}
             >
               Good morning, {user?.fullName?.split(' ')[0] || 'User'} 👋
             </motion.h1>
-            <div style={{ color: '#94A3B8', fontSize: '15px' }}>{todayStr}</div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
+              style={{ color: 'rgba(255,255,255,0.38)', fontSize: '14px', letterSpacing: '-0.01em' }}
+            >
+              {todayStr}
+            </motion.div>
           </div>
-          
-          <button 
+
+          {/* Notification button */}
+          <motion.button
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => navigate('/notifications')}
-            style={{ 
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-            width: '44px', height: '44px', borderRadius: '50%', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F8FAFC',
-            position: 'relative', transition: 'background 0.2s'
-          }}>
-            <Bell size={20} />
+            style={{
+              background: 'rgba(255,255,255,0.07)',
+              backdropFilter: 'blur(30px)',
+              WebkitBackdropFilter: 'blur(30px)',
+              border: '1px solid rgba(255,255,255,0.14)',
+              width: '46px', height: '46px',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'rgba(255,255,255,0.8)',
+              position: 'relative',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 16px rgba(0,0,0,0.25)',
+              transition: 'all 0.25s ease',
+            }}
+          >
+            <Bell size={18} strokeWidth={1.8} />
             {unreadCount > 0 && (
-              <span style={{ position: 'absolute', top: '10px', right: '12px', width: '8px', height: '8px', background: '#EF4444', borderRadius: '50%', border: '2px solid #0D0B1E' }} />
+              <span style={{
+                position: 'absolute', top: '10px', right: '11px',
+                width: '8px', height: '8px',
+                background: '#FF453A',
+                borderRadius: '50%',
+                border: '2px solid var(--bg-base)',
+                boxShadow: '0 0 8px rgba(255,69,58,0.7)',
+              }} />
             )}
-          </button>
+          </motion.button>
         </header>
 
-        {/* Section 2 - Stats Row */}
-        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '48px' }}>
-          {[
-            { label: 'Total Savings', val: totalSavings, pre: 'KES ', icon: TrendingUp, color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' },
-            { label: 'Active Loans', val: activeLoansCount, pre: '', icon: CreditCard, color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' },
-            { label: 'My Chamas', val: chamas.length, pre: '', icon: Users, color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)' },
-            { label: 'Credit Score', val: creditScore, pre: '', icon: Star, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' },
-          ].map((stat, i) => {
+        {/* ── Stats Grid ── */}
+        <div
+          className="stats-grid"
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '44px' }}
+        >
+          {statsData.map((stat, i) => {
             const Icon = stat.icon
             return (
-              <motion.div 
+              <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 className="glass-card"
                 style={{
-                  background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '24px'
+                  padding: '28px 24px',
+                  borderColor: stat.borderColor,
+                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.22), 0 8px 32px ${stat.glowColor}, 0 4px 12px rgba(0,0,0,0.25)`,
+                  cursor: 'default',
                 }}
               >
-                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: stat.bg, color: stat.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                  <Icon size={24} />
+                {/* Icon badge */}
+                <div
+                  className="stat-icon-ring"
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    background: stat.iconBg,
+                    border: `1px solid ${stat.borderColor}`,
+                    marginBottom: '22px',
+                    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 12px ${stat.glowColor}`,
+                  }}
+                >
+                  <Icon size={22} color={stat.accentColor} strokeWidth={2} />
                 </div>
-                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: '28px', fontWeight: 700, color: '#FFF', marginBottom: '4px' }}>
+
+                {/* Value */}
+                <div style={{
+                  fontSize: '30px',
+                  fontWeight: 700,
+                  color: 'rgba(255,255,255,0.95)',
+                  marginBottom: '5px',
+                  letterSpacing: '-0.03em',
+                  lineHeight: 1,
+                }}>
                   <AnimatedNumber value={stat.val} prefix={stat.pre} />
                 </div>
-                <div style={{ color: '#94A3B8', fontSize: '14px' }}>{stat.label}</div>
+
+                {/* Label */}
+                <div style={{
+                  color: 'rgba(255,255,255,0.40)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  letterSpacing: '0.02em',
+                  textTransform: 'uppercase',
+                }}>
+                  {stat.label}
+                </div>
+
+                {/* Bottom accent line */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0, left: '20%', right: '20%',
+                  height: '1px',
+                  background: `linear-gradient(90deg, transparent, ${stat.accentColor}55, transparent)`,
+                  borderRadius: '0 0 28px 28px',
+                }} />
               </motion.div>
             )
           })}
         </div>
 
-        <div className="content-grid" style={{ display: 'grid', gridTemplateColumns: '7fr 4fr', gap: '32px', marginBottom: '40px' }}>
-          
-          {/* Section 3 - My Chamas */}
+        {/* ── Content Grid: Chamas + Activity ── */}
+        <div
+          className="content-grid"
+          style={{ display: 'grid', gridTemplateColumns: '7fr 4fr', gap: '28px', marginBottom: '44px' }}
+        >
+          {/* ── My Chamas ── */}
           <section>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '20px', color: '#FFF', margin: 0, fontWeight: 700 }}>My Chamas</h2>
-              <button 
+              <h2 style={{
+                fontSize: '18px', fontWeight: 700,
+                color: 'rgba(255,255,255,0.90)', margin: 0,
+                letterSpacing: '-0.02em',
+              }}>
+                My Chamas
+              </h2>
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setShowCreateChama(true)}
-                style={{ background: 'rgba(14,165,233,0.1)', color: '#0EA5E9', border: '1px solid rgba(14,165,233,0.2)', padding: '8px 16px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{
+                  background: 'rgba(62,173,255,0.10)',
+                  color: 'rgba(62,173,255,0.90)',
+                  border: '1px solid rgba(62,173,255,0.25)',
+                  padding: '8px 16px',
+                  borderRadius: '22px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(62,173,255,0.12)',
+                  letterSpacing: '-0.01em',
+                }}
               >
-                <Plus size={16} /> New Chama
-              </button>
+                <Plus size={14} strokeWidth={2.5} /> New Chama
+              </motion.button>
             </div>
-            
-            <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '16px', scrollbarWidth: 'none' }}>
+
+            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', scrollbarWidth: 'none' }}>
               {chamas.length === 0 ? (
-                <div style={{ width: '100%', padding: '40px', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '20px', textAlign: 'center' }}>
-                  <div style={{ width: '64px', height: '64px', background: 'rgba(14,165,233,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#0EA5E9' }}>
-                    <Users size={32} />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="glass-card"
+                  style={{
+                    width: '100%',
+                    padding: '52px 40px',
+                    textAlign: 'center',
+                    border: '1px dashed rgba(255,255,255,0.12)',
+                    background: 'rgba(255,255,255,0.02)',
+                  }}
+                >
+                  <div style={{
+                    width: '64px', height: '64px',
+                    borderRadius: '20px',
+                    background: 'rgba(62,173,255,0.10)',
+                    border: '1px solid rgba(62,173,255,0.20)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 20px',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 16px rgba(62,173,255,0.15)',
+                  }}>
+                    <Users size={30} color="rgba(62,173,255,0.85)" strokeWidth={1.6} />
                   </div>
-                  <h3 style={{ color: '#FFF', fontFamily: "'Syne', sans-serif", margin: '0 0 8px 0' }}>No chamas yet</h3>
-                  <p style={{ color: '#94A3B8', fontSize: '14px', margin: '0 0 20px 0' }}>Create or join a group to start saving together.</p>
-                  <button onClick={() => setShowCreateChama(true)} className="btn-primary" style={{ padding: '10px 24px', borderRadius: '10px', border: 'none', background: '#0EA5E9', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>Create your first chama</button>
-                </div>
+                  <h3 style={{
+                    color: 'rgba(255,255,255,0.85)', fontSize: '17px',
+                    margin: '0 0 8px 0', fontWeight: 700, letterSpacing: '-0.02em',
+                  }}>
+                    No chamas yet
+                  </h3>
+                  <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '14px', margin: '0 0 24px 0', lineHeight: 1.5 }}>
+                    Create or join a group to start saving together.
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setShowCreateChama(true)}
+                    className="btn-primary"
+                    style={{ padding: '11px 28px', borderRadius: '22px', fontSize: '14px' }}
+                  >
+                    Create your first chama
+                  </motion.button>
+                </motion.div>
               ) : (
                 chamas.map((c, i) => (
-                  <motion.div 
+                  <motion.div
                     key={c._id || i}
-                    initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
-                    style={{ minWidth: '280px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '24px', display: 'flex', flexDirection: 'column' }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.08, type: 'spring', damping: 22, stiffness: 250 }}
+                    className="glass-card"
+                    style={{ minWidth: '260px', padding: '26px', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}
+                    onClick={() => navigate(`/chama/${c.chamaId?._id || c._id}`)}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                      <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', color: '#FFF', margin: 0, fontWeight: 700 }}>{c.name}</h3>
-                      <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', padding: '4px 8px', borderRadius: '6px', background: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' }}>Member</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
+                      <h3 style={{
+                        fontSize: '16px', color: 'rgba(255,255,255,0.92)',
+                        margin: 0, fontWeight: 700, letterSpacing: '-0.02em',
+                      }}>
+                        {c.name}
+                      </h3>
+                      <span
+                        className="pill-badge"
+                        style={{
+                          background: 'rgba(110,106,255,0.12)',
+                          color: 'rgba(110,106,255,0.90)',
+                          border: '1px solid rgba(110,106,255,0.22)',
+                        }}
+                      >
+                        Member
+                      </span>
                     </div>
-                    <div style={{ color: '#94A3B8', fontSize: '13px', marginBottom: '4px' }}>Group Balance</div>
-                    <div style={{ color: '#0EA5E9', fontSize: '24px', fontWeight: 700, fontFamily: "'Syne', sans-serif", marginBottom: '20px' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500 }}>
+                      Group Balance
+                    </div>
+                    <div style={{
+                      color: 'rgba(62,173,255,0.92)', fontSize: '24px',
+                      fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '22px',
+                    }}>
                       KES {(c.balance || 0).toLocaleString()}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94A3B8', fontSize: '14px' }}>
-                        <Users size={16} /> {c.members?.length || 1} members
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.38)', fontSize: '13px' }}>
+                        <Users size={14} strokeWidth={1.8} /> {c.members?.length || 1} members
                       </div>
-                      <button onClick={() => navigate(`/chama/${c.chamaId?._id || c._id}`)} style={{ background: 'transparent', border: 'none', color: '#FFF', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
-                        View <ArrowRight size={14} />
-                      </button>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        color: 'rgba(255,255,255,0.60)', fontSize: '13px', fontWeight: 600,
+                      }}>
+                        View <ArrowRight size={13} />
+                      </div>
                     </div>
                   </motion.div>
                 ))
@@ -356,35 +627,90 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Section 4 - Recent Activity feed */}
+          {/* ── Recent Activity ── */}
           <section>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '20px', color: '#FFF', margin: 0, fontWeight: 700 }}>Recent Activity</h2>
+              <h2 style={{
+                fontSize: '18px', fontWeight: 700,
+                color: 'rgba(255,255,255,0.90)', margin: 0,
+                letterSpacing: '-0.02em',
+              }}>
+                Recent Activity
+              </h2>
             </div>
-            
-            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '20px', height: '320px', overflowY: 'auto' }}>
-              <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '16px', marginBottom: '16px' }}>
-                <span style={{ color: '#FFF', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>All</span>
-                <span style={{ color: '#64748B', fontSize: '14px', cursor: 'pointer' }}>Contributions</span>
-                <span style={{ color: '#64748B', fontSize: '14px', cursor: 'pointer' }}>Loans</span>
+
+            <div
+              className="glass-card"
+              style={{ padding: '22px', height: '340px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
+            >
+              {/* Filter tabs */}
+              <div style={{
+                display: 'flex', gap: '4px',
+                borderBottom: '1px solid rgba(255,255,255,0.07)',
+                paddingBottom: '16px', marginBottom: '18px',
+              }}>
+                {['All', 'Contributions', 'Loans'].map((tab, i) => (
+                  <button
+                    key={tab}
+                    style={{
+                      background: i === 0 ? 'rgba(255,255,255,0.08)' : 'transparent',
+                      border: i === 0 ? '1px solid rgba(255,255,255,0.12)' : '1px solid transparent',
+                      borderRadius: '20px',
+                      padding: '4px 12px',
+                      fontSize: '12px',
+                      fontWeight: i === 0 ? 600 : 400,
+                      color: i === 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)',
+                      cursor: 'pointer',
+                      letterSpacing: '-0.01em',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {tab}
+                  </button>
+                ))}
               </div>
 
               {notifications.length === 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#64748B' }}>
-                   <Activity size={48} strokeWidth={1} style={{ marginBottom: '16px', opacity: 0.5 }} />
-                   <span>No recent activity</span>
+                <div style={{
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  flex: 1, gap: '14px',
+                }}>
+                  <div style={{
+                    width: '52px', height: '52px', borderRadius: '16px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Activity size={24} color="rgba(255,255,255,0.20)" strokeWidth={1.5} />
+                  </div>
+                  <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: '13px' }}>No recent activity</span>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {notifications.map((n, i) => (
-                    <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i*0.1 }} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Wallet size={18} />
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.07 }}
+                      style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}
+                    >
+                      <div style={{
+                        width: '36px', height: '36px', borderRadius: '12px',
+                        background: 'rgba(48,209,88,0.10)',
+                        border: '1px solid rgba(48,209,88,0.18)',
+                        color: '#30D158',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15)',
+                      }}>
+                        <Wallet size={16} strokeWidth={2} />
                       </div>
-                      <div>
-                        <div style={{ color: '#FFF', fontSize: '14px', fontWeight: 500, marginBottom: '2px' }}>{n.title}</div>
-                        <div style={{ color: '#94A3B8', fontSize: '13px', marginBottom: '4px' }}>{n.message}</div>
-                        <div style={{ color: '#475569', fontSize: '11px' }}>2 hours ago</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: 'rgba(255,255,255,0.88)', fontSize: '13.5px', fontWeight: 600, marginBottom: '2px', letterSpacing: '-0.01em' }}>{n.title}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.40)', fontSize: '12.5px', marginBottom: '4px', lineHeight: 1.4 }}>{n.message}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.22)', fontSize: '11px' }}>2 hours ago</div>
                       </div>
                     </motion.div>
                   ))}
@@ -394,41 +720,72 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        {/* Section 5 - Quick Actions row */}
+        {/* ── Quick Actions ── */}
         <section>
-          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '20px', color: '#FFF', margin: '0 0 20px 0', fontWeight: 700 }}>Quick Actions</h2>
-          <div className="quick-actions-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
-            {[
-              { label: 'Contribute', icon: Wallet, color: '#10B981', action: () => setShowContribute(true) },
-              { label: 'Request Loan', icon: CreditCard, color: '#0EA5E9', action: () => alert('Loans coming soon') },
-              { label: 'Invite Member', icon: Users, color: '#8B5CF6', action: () => alert('Invites coming soon') },
-              { label: 'View Reports', icon: TrendingUp, color: '#F59E0B', action: () => alert('Reports coming soon') }
-            ].map((action, i) => {
+          <h2 style={{
+            fontSize: '18px', fontWeight: 700,
+            color: 'rgba(255,255,255,0.90)', margin: '0 0 20px 0',
+            letterSpacing: '-0.02em',
+          }}>
+            Quick Actions
+          </h2>
+          <div
+            className="quick-actions-grid"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}
+          >
+            {quickActions.map((action, i) => {
               const Icon = action.icon
               return (
                 <motion.div
                   key={i}
-                  whileHover={{ y: -5, boxShadow: `0 10px 24px ${action.color}33`, borderColor: `${action.color}80` }}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 + i * 0.07, type: 'spring', damping: 20, stiffness: 260 }}
+                  whileHover={{
+                    y: -5,
+                    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.25), 0 16px 40px ${action.glowColor}, 0 4px 16px rgba(0,0,0,0.3)`,
+                    borderColor: `${action.accentColor}44`,
+                  }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={action.action}
+                  className="glass-card"
                   style={{
-                    background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px',
-                    padding: '24px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', transition: 'border 0.3s'
+                    padding: '28px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    gap: '14px',
                   }}
                 >
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: `${action.color}15`, color: action.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
-                    <Icon size={24} />
+                  <div style={{
+                    width: '52px', height: '52px',
+                    borderRadius: '18px',
+                    background: `${action.accentColor}14`,
+                    border: `1px solid ${action.accentColor}28`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 16px ${action.glowColor}`,
+                  }}>
+                    <Icon size={24} color={action.accentColor} strokeWidth={1.8} />
                   </div>
-                  <div style={{ color: '#F8FAFC', fontSize: '15px', fontWeight: 600 }}>{action.label}</div>
+                  <div style={{
+                    color: 'rgba(255,255,255,0.82)',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    letterSpacing: '-0.01em',
+                  }}>
+                    {action.label}
+                  </div>
                 </motion.div>
               )
             })}
           </div>
         </section>
-
       </main>
 
-      {/* Bottom Nav for Mobile */}
+      {/* ── Mobile Bottom Nav ── */}
       <nav className="bottom-nav">
         {NAV_ITEMS.map((item) => {
           const isActive = activeNav === item.id
@@ -438,100 +795,188 @@ export default function DashboardPage() {
               key={item.id}
               onClick={() => setActiveNav(item.id)}
               style={{
-                background: 'transparent', border: 'none', color: isActive ? '#0EA5E9' : '#64748B',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '10px',
-                flex: 1, cursor: 'pointer'
+                background: 'transparent', border: 'none',
+                color: isActive ? '#3EADFF' : 'rgba(255,255,255,0.30)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                padding: '10px', flex: 1, cursor: 'pointer',
+                transition: 'color 0.2s ease',
               }}
             >
-              <Icon size={20} />
-              <span style={{ fontSize: '10px' }}>{item.label}</span>
+              <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
+              <span style={{ fontSize: '10px', fontWeight: isActive ? 600 : 400, letterSpacing: '0.02em' }}>{item.label}</span>
             </button>
           )
         })}
       </nav>
 
-      {/* Inline styles */}
-      <style>{`
-        .bottom-nav { display: none; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
-        @media (max-width: 900px) {
-          .content-grid { grid-template-columns: 1fr !important; }
-        }
-        @media (max-width: 768px) {
-          .sidebar { display: none !important; }
-          .main-content { margin-left: 0 !important; padding: 20px !important; padding-bottom: 80px !important; }
-          .bottom-nav { 
-            display: flex; position: fixed; bottom: 0; left: 0; right: 0; 
-            background: rgba(13, 11, 20, 0.95); backdrop-filter: blur(10px); 
-            border-top: 1px solid rgba(255,255,255,0.06); z-index: 50; 
-          }
-          .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .quick-actions-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (max-width: 480px) {
-          .stats-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-
-      {/* MODALS */}
+      {/* ── Modals ── */}
       <AnimatePresence>
         {showCreateChama && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreateChama(false)}
-              style={{ position: 'absolute', inset: 0, background: 'rgba(13, 11, 30, 0.8)', backdropFilter: 'blur(8px)' }} 
-            />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              style={{ position: 'relative', width: '400px', maxWidth: '90%', background: '#12101f', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 24px 48px rgba(0,0,0,0.5)' }}
+          <GlassModal onClose={() => setShowCreateChama(false)}>
+            <button
+              onClick={() => setShowCreateChama(false)}
+              style={{
+                position: 'absolute', top: '20px', right: '20px',
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                width: '32px', height: '32px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'rgba(255,255,255,0.55)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.16)',
+                transition: 'all 0.2s ease',
+              }}
             >
-              <button onClick={() => setShowCreateChama(false)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}><X size={20} /></button>
-              <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '24px', color: '#FFF', margin: '0 0 24px 0', fontWeight: 700 }}>Create New Chama</h2>
-              
-              <FloatingInput label="Chama Name" value={newChama.name} onChange={(e) => setNewChama({...newChama, name: e.target.value})} />
-              <FloatingInput label="Description" value={newChama.description} onChange={(e) => setNewChama({...newChama, description: e.target.value})} />
-              
-              <button disabled={modalLoading} onClick={handleCreateChama} className="btn-primary" style={{ width: '100%', height: '52px', background: '#0EA5E9', color: '#FFF', border: 'none', borderRadius: '14px', fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: '16px', cursor: 'pointer', marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {modalLoading ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : 'Create Chama'}
-              </button>
-            </motion.div>
-          </div>
+              <X size={15} />
+            </button>
+            <h2 style={{
+              fontSize: '22px', color: 'rgba(255,255,255,0.95)',
+              margin: '0 0 28px 0', fontWeight: 700, letterSpacing: '-0.02em',
+            }}>
+              Create New Chama
+            </h2>
+            <FloatingInput
+              label="Chama Name"
+              value={newChama.name}
+              onChange={(e) => setNewChama({ ...newChama, name: e.target.value })}
+            />
+            <FloatingInput
+              label="Description"
+              value={newChama.description}
+              onChange={(e) => setNewChama({ ...newChama, description: e.target.value })}
+            />
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              disabled={modalLoading}
+              onClick={handleCreateChama}
+              className="btn-primary"
+              style={{
+                width: '100%', height: '54px',
+                borderRadius: '16px',
+                fontSize: '15px', fontWeight: 700,
+                marginTop: '8px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {modalLoading
+                ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                : 'Create Chama'}
+            </motion.button>
+          </GlassModal>
         )}
 
         {showContribute && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowContribute(false)}
-              style={{ position: 'absolute', inset: 0, background: 'rgba(13, 11, 30, 0.8)', backdropFilter: 'blur(8px)' }} 
-            />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              style={{ position: 'relative', width: '400px', maxWidth: '90%', background: '#12101f', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 24px 48px rgba(0,0,0,0.5)' }}
+          <GlassModal onClose={() => setShowContribute(false)}>
+            <button
+              onClick={() => setShowContribute(false)}
+              style={{
+                position: 'absolute', top: '20px', right: '20px',
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                width: '32px', height: '32px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'rgba(255,255,255,0.55)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.16)',
+                transition: 'all 0.2s ease',
+              }}
             >
-              <button onClick={() => setShowContribute(false)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}><X size={20} /></button>
-              <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '24px', color: '#FFF', margin: '0 0 24px 0', fontWeight: 700 }}>Make Contribution</h2>
-              
-              <div style={{ position: 'relative', marginBottom: '20px' }}>
-                <select 
-                  value={contribData.chamaId} onChange={(e) => setContribData({...contribData, chamaId: e.target.value})}
-                  style={{ width: '100%', height: '56px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '14px', color: '#F8FAFC', padding: '0 16px', fontSize: '15px', outline: 'none', appearance: 'none', fontFamily: "'DM Sans', sans-serif" }}
-                >
-                  <option value="" disabled style={{ background: '#12101f' }}>Select Chama...</option>
-                  {chamas.map(c => <option key={c._id} value={c._id} style={{ background: '#12101f' }}>{c.name}</option>)}
-                </select>
-                <ChevronDown size={18} style={{ position: 'absolute', right: '16px', top: '19px', color: '#64748B', pointerEvents: 'none' }} />
-              </div>
+              <X size={15} />
+            </button>
+            <h2 style={{
+              fontSize: '22px', color: 'rgba(255,255,255,0.95)',
+              margin: '0 0 28px 0', fontWeight: 700, letterSpacing: '-0.02em',
+            }}>
+              Make Contribution
+            </h2>
 
-              <FloatingInput label="Amount (KES)" type="number" value={contribData.amount} onChange={(e) => setContribData({...contribData, amount: e.target.value})} />
-              <FloatingPhoneInput value={contribData.mpesaPhone} onChange={(val) => setContribData({...contribData, mpesaPhone: val})} />
-              
-              {contribSuccess && (
-                <div style={{ padding: '12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', borderRadius: '10px', fontSize: '13px', textAlign: 'center', marginBottom: '16px' }}>
-                  {contribSuccess}
-                </div>
-              )}
+            <div style={{ position: 'relative', marginBottom: '24px' }}>
+              <select
+                value={contribData.chamaId}
+                onChange={(e) => setContribData({ ...contribData, chamaId: e.target.value })}
+                style={{
+                  width: '100%', height: '58px',
+                  background: 'rgba(255,255,255,0.06)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  borderRadius: '16px',
+                  color: contribData.chamaId ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.35)',
+                  padding: '0 44px 0 16px',
+                  fontSize: '15px', outline: 'none', appearance: 'none',
+                  fontFamily: 'inherit',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                <option value="" disabled style={{ background: '#0a0d16' }}>Select Chama...</option>
+                {chamas.map(c => (
+                  <option key={c._id} value={c._id} style={{ background: '#0a0d16' }}>{c.name}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} style={{ position: 'absolute', right: '16px', top: '21px', color: 'rgba(255,255,255,0.35)', pointerEvents: 'none' }} />
+            </div>
 
-              <button disabled={modalLoading || !!contribSuccess} onClick={handleContribute} className="btn-primary" style={{ width: '100%', height: '52px', background: '#10B981', color: '#FFF', border: 'none', borderRadius: '14px', fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {modalLoading ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : 'Contribute KES'}
-              </button>
-            </motion.div>
-          </div>
+            <FloatingInput
+              label="Amount (KES)"
+              type="number"
+              value={contribData.amount}
+              onChange={(e) => setContribData({ ...contribData, amount: e.target.value })}
+            />
+            <FloatingPhoneInput
+              value={contribData.mpesaPhone}
+              onChange={(val) => setContribData({ ...contribData, mpesaPhone: val })}
+            />
+
+            {contribSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  padding: '14px 16px',
+                  background: 'rgba(48,209,88,0.10)',
+                  border: '1px solid rgba(48,209,88,0.25)',
+                  borderRadius: '14px',
+                  color: '#30D158',
+                  fontSize: '13.5px',
+                  textAlign: 'center',
+                  marginBottom: '16px',
+                  boxShadow: 'inset 0 1px 0 rgba(48,209,88,0.15)',
+                }}
+              >
+                {contribSuccess}
+              </motion.div>
+            )}
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              disabled={modalLoading || !!contribSuccess}
+              onClick={handleContribute}
+              style={{
+                width: '100%', height: '54px',
+                background: 'linear-gradient(160deg, rgba(48,209,88,0.82) 0%, rgba(48,209,88,0.62) 100%)',
+                color: 'rgba(255,255,255,0.95)',
+                border: '1px solid rgba(48,209,88,0.40)',
+                borderRadius: '16px',
+                fontFamily: 'inherit',
+                fontSize: '15px', fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backdropFilter: 'blur(20px)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25), 0 0 24px rgba(48,209,88,0.20)',
+                letterSpacing: '-0.01em',
+                transition: 'all 0.25s ease',
+              }}
+            >
+              {modalLoading
+                ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                : 'Contribute KES'}
+            </motion.button>
+          </GlassModal>
         )}
       </AnimatePresence>
     </div>
