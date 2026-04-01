@@ -6,8 +6,7 @@ import ToastContainer from './components/ToastContainer'
 
 // Pages (we will create these next)
 import LandingPage from './pages/LandingPage'
-import LoginPage from './pages/LoginPage'
-import RegisterPage from './pages/RegisterPage'
+import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import ChamaDetailPage from './pages/ChamaDetailPage'
 import AICoachPage from './pages/AICoachPage'
@@ -35,8 +34,8 @@ export default function App() {
       <ToastContainer />
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/register" element={<AuthPage />} />
         <Route path="/dashboard" element={
           <ProtectedRoute><DashboardPage /></ProtectedRoute>
         } />
