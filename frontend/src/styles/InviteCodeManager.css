@@ -1,0 +1,169 @@
+.invite-code-manager {
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.invite-code-header h3 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.invite-code-header p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.invite-code-display {
+  margin-bottom: 1.5rem;
+}
+
+.code-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  backdrop-filter: blur(24px);
+}
+
+.code-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--primary);
+  flex: 1;
+  text-align: center;
+}
+
+.copy-button {
+  padding: 0.75rem 1.5rem;
+  background: rgba(14, 165, 233, 0.1);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  border-radius: 12px;
+  color: var(--primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.copy-button:hover {
+  background: rgba(14, 165, 233, 0.2);
+  transform: translateY(-1px);
+}
+
+.invite-code-actions {
+  margin-bottom: 1.5rem;
+}
+
+.regenerate-button {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 12px;
+  color: var(--purple);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.regenerate-button:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.regenerate-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(24px);
+}
+
+.invite-instructions {
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.invite-instructions h4 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.invite-instructions ol {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding-left: 1.5rem;
+}
+
+.invite-instructions li {
+  margin-bottom: 0.5rem;
+}
+
+/* Glass Button Base Styles */
+.glass-button {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Glass Card Base Styles */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255,255,255,0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* CSS Variables */
+:root {
+  --glass-bg: #FFFFFF0D;
+  --glass-border: #FFFFFF1A;
+  --glass-blur: blur(24px);
+  --primary: #0EA5E9;
+  --primary-dark: #0284C7;
+  --surface-1: #0F172A;
+  --surface-2: #1E293B;
+  --surface-3: #334155;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --purple: #8B5CF6;
+}

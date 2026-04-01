@@ -1,0 +1,247 @@
+.join-chama-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+}
+
+.join-chama-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><filter id="noise"><feTurbulence baseFrequency="0.9" /></filter></defs><rect width="100" height="100" filter="url(%23noise)" opacity="0.04"/></svg>');
+  pointer-events: none;
+}
+
+.join-chama-card {
+  max-width: 500px;
+  width: 100%;
+  padding: 3rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.join-chama-header h1 {
+  color: var(--text-primary);
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.join-chama-header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+.invite-code-input {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.glass-input {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.2em;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  color: var(--text-primary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.glass-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.loading-spinner {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(24px);
+}
+
+.success-message {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--success);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(24px);
+}
+
+.chama-info {
+  margin-top: 2rem;
+  padding: 2rem;
+  text-align: left;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chama-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.chama-header h3 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.member-count {
+  background: rgba(14, 165, 233, 0.1);
+  color: var(--primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.chama-description {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.chama-meta {
+  margin-bottom: 1.5rem;
+}
+
+.chama-meta span {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.join-button {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.3);
+}
+
+.join-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4);
+}
+
+.join-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.help-text {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.help-text p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Glass Card Base Styles */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255,255,255,0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* CSS Variables */
+:root {
+  --glass-bg: #FFFFFF0D;
+  --glass-border: #FFFFFF1A;
+  --glass-blur: blur(24px);
+  --primary: #0EA5E9;
+  --primary-dark: #0284C7;
+  --surface-1: #0F172A;
+  --surface-2: #1E293B;
+  --surface-3: #334155;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --purple: #8B5CF6;
+}

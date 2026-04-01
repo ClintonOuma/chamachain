@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import useAuthStore from './store/authStore'
 import LoadingScreen from './components/LoadingScreen'
+import ToastContainer from './components/ToastContainer'
 
 // Pages (we will create these next)
 import LandingPage from './pages/LandingPage'
@@ -31,6 +32,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="mesh-bg" />
+      <ToastContainer />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -73,3 +75,4 @@ export default function App() {
     </BrowserRouter>
   )
 }
+

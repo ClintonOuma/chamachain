@@ -99,7 +99,15 @@ const requestLoan = async (req, res) => {
       actionUrl: `/chama/${chamaId}`
     });
 
+    await logAction({
+      chamaId,
+      performedBy: req.user.userId,
+      action: 'loan_requested',
+      metadata: { loanId: loan._id, amount: numAmount }
+    });
+
     return res.status(201).json({ success: true, loan });
+
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -287,7 +295,15 @@ const repayLoan = async (req, res) => {
 
     await loan.save();
 
+    await logAction({
+      chamaId,
+      performedBy: req.user.userId,
+      action: 'loan_repayment',
+      metadata: { loanId, amount: numAmount, mpesaRef }
+    });
+
     return res.json({ success: true, loan });
+
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
