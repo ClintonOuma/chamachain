@@ -217,6 +217,8 @@ export default function DashboardPage() {
   const [chamas, setChamas] = useState([])
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [totalSavings, setTotalSavings] = useState(0)
+  const [activeLoansCount, setActiveLoansCount] = useState(0)
   const [activeNav, setActiveNav] = useState('dashboard')
   const [showCreateChama, setShowCreateChama] = useState(false)
   const [showContribute, setShowContribute] = useState(false)
@@ -233,14 +235,35 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      setLoading(true)
       try {
         const [chamasRes, notifRes] = await Promise.all([
-          api.get('/chamas').catch(() => ({ data: { chamas: [] } })),
-          api.get('/notifications').catch(() => ({ data: { notifications: [], unreadCount: 0 } }))
+          api.get('/chamas'),
+          api.get('/notifications')
         ])
-        setChamas(chamasRes.data.chamas || [])
+        const chamaList = chamasRes.data.chamas || []
+        setChamas(chamaList)
         setNotifications(notifRes.data.notifications || [])
         setUnreadCount(notifRes.data.unreadCount || 0)
+
+        // Calculate total savings across all chamas
+        const total = chamaList.reduce((sum, item) => {
+          const chama = item.chamaId || item
+          return sum + (chama.totalBalance || 0)
+        }, 0)
+        setTotalSavings(total)
+
+        // Fetch loans if chamas exist
+        if (chamaList.length > 0) {
+          const firstChamaId = chamaList[0].chamaId?._id || chamaList[0]._id
+          try {
+            const loansRes = await api.get(`/loans/${firstChamaId}/my`)
+            const activeLoans = (loansRes.data.loans || []).filter(l => l.status === 'disbursed')
+            setActiveLoansCount(activeLoans.length)
+          } catch (e) {
+            setActiveLoansCount(0)
+          }
+        }
       } catch (err) {
         console.error('Dashboard fetch error:', err)
       } finally {
@@ -296,9 +319,7 @@ export default function DashboardPage() {
   }
 
   const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-  const totalSavings = chamas.reduce((acc, c) => acc + (c.balance || 0), 0) + 125000
-  const activeLoansCount = 2
-  const creditScore = 740
+  const creditScore = 'N/A'
 
   // Stats with accent colors matching Apple's vibrant palette
   const statsData = [
@@ -479,7 +500,11 @@ export default function DashboardPage() {
                   letterSpacing: '-0.03em',
                   lineHeight: 1,
                 }}>
-                  <AnimatedNumber value={stat.val} prefix={stat.pre} />
+                  {stat.label === 'Total Savings' ? `KES ${totalSavings.toLocaleString()}` : 
+                   stat.label === 'Active Loans' ? `${activeLoansCount}` : 
+                   stat.label === 'My Chamas' ? `${chamas.length}` : 
+                   stat.label === 'Credit Score' ? 'N/A' : 
+                   <AnimatedNumber value={stat.val} prefix={stat.pre} />}
                 </div>
 
                 {/* Label */}
@@ -592,56 +617,60 @@ export default function DashboardPage() {
                   </motion.button>
                 </motion.div>
               ) : (
-                chamas.map((c, i) => (
-                  <motion.div
-                    key={c._id || i}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.08, type: 'spring', damping: 22, stiffness: 250 }}
-                    className="glass-card"
-                    style={{ minWidth: '260px', padding: '26px', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}
-                    onClick={() => navigate(`/chama/${c.chamaId?._id || c._id}`)}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
-                      <h3 style={{
-                        fontSize: '16px', color: 'rgba(255,255,255,0.92)',
-                        margin: 0, fontWeight: 700, letterSpacing: '-0.02em',
-                      }}>
-                        {c.name}
-                      </h3>
-                      <span
-                        className="pill-badge"
-                        style={{
-                          background: 'rgba(94,92,230,0.12)',
-                          color: 'rgba(94,92,230,0.90)',
-                          border: '1px solid rgba(94,92,230,0.25)',
-                        }}
-                      >
-                        Member
-                      </span>
-                    </div>
-                    <div style={{ color: 'rgba(255,255,255,0.38)', fontSize: '12px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500 }}>
-                      Group Balance
-                    </div>
-                    <div style={{
-                      color: 'rgba(74,195,255,0.92)', fontSize: '24px',
-                      fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '22px',
-                    }}>
-                      KES {(c.balance || 0).toLocaleString()}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.40)', fontSize: '13px' }}>
-                        <Users size={14} strokeWidth={1.8} /> {c.members?.length || 1} members
+                chamas.map((item, i) => {
+                  const chamaId = item.chamaId?._id || item._id
+                  const chamaData = item.chamaId || item
+                  return (
+                    <motion.div
+                      key={chamaId || i}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.08, type: 'spring', damping: 22, stiffness: 250 }}
+                      className="glass-card"
+                      style={{ minWidth: '260px', padding: '26px', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}
+                      onClick={() => navigate(`/chama/${chamaId}`)}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
+                        <h3 style={{
+                          fontSize: '16px', color: 'rgba(255,255,255,0.92)',
+                          margin: 0, fontWeight: 700, letterSpacing: '-0.02em',
+                        }}>
+                          {chamaData.name}
+                        </h3>
+                        <span
+                          className="pill-badge"
+                          style={{
+                            background: 'rgba(94,92,230,0.12)',
+                            color: 'rgba(94,92,230,0.90)',
+                            border: '1px solid rgba(94,92,230,0.25)',
+                          }}
+                        >
+                          {item.role || 'Member'}
+                        </span>
+                      </div>
+                      <div style={{ color: 'rgba(255,255,255,0.38)', fontSize: '12px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500 }}>
+                        Group Balance
                       </div>
                       <div style={{
-                        display: 'flex', alignItems: 'center', gap: '4px',
-                        color: 'rgba(255,255,255,0.60)', fontSize: '13px', fontWeight: 600,
+                        color: 'rgba(74,195,255,0.92)', fontSize: '24px',
+                        fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '22px',
                       }}>
-                        View <ArrowRight size={13} />
+                        KES {(chamaData.totalBalance || 0).toLocaleString()}
                       </div>
-                    </div>
-                  </motion.div>
-                ))
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.40)', fontSize: '13px' }}>
+                          <Users size={14} strokeWidth={1.8} /> {chamaData.members?.length || 1} members
+                        </div>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: '4px',
+                          color: 'rgba(255,255,255,0.60)', fontSize: '13px', fontWeight: 600,
+                        }}>
+                          View <ArrowRight size={13} />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })
               )}
             </div>
           </section>
@@ -691,51 +720,40 @@ export default function DashboardPage() {
               </div>
 
               {notifications.length === 0 ? (
-                <div style={{
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center',
-                  flex: 1, gap: '14px',
-                }}>
-                  <div style={{
-                    width: '52px', height: '52px', borderRadius: '16px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.10)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.15)',
-                  }}>
-                    <Activity size={24} color="rgba(255,255,255,0.22)" strokeWidth={1.5} />
-                  </div>
-                  <span style={{ color: 'rgba(255,255,255,0.30)', fontSize: '13px' }}>No recent activity</span>
+                <div style={{ textAlign: 'center', padding: '40px', color: '#64748B' }}>
+                  <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔔</div>
+                  <p style={{ fontFamily: 'DM Sans' }}>No activity yet</p>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {notifications.map((n, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.07 }}
-                      style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}
-                    >
-                      <div style={{
-                        width: '36px', height: '36px', borderRadius: '10px',
-                        background: 'rgba(50,215,75,0.10)',
-                        border: '1px solid rgba(50,215,75,0.20)',
-                        color: '#32d74b',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
-                        boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.18)',
-                      }}>
-                        <Wallet size={16} strokeWidth={2} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: 'rgba(255,255,255,0.88)', fontSize: '13.5px', fontWeight: 600, marginBottom: '2px', letterSpacing: '-0.01em' }}>{n.title}</div>
-                        <div style={{ color: 'rgba(255,255,255,0.42)', fontSize: '12.5px', marginBottom: '4px', lineHeight: 1.4 }}>{n.message}</div>
-                        <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '11px' }}>2 hours ago</div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                notifications.slice(0, 10).map((notif, i) => (
+                  <div key={notif._id} style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                    padding: '14px 0',
+                    borderBottom: i < notifications.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none'
+                  }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+                      background: notif.type === 'contribution' ? 'rgba(16,185,129,0.15)' : 
+                                  notif.type === 'loan' ? 'rgba(14,165,233,0.15)' : 'rgba(139,92,246,0.15)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px'
+                    }}>
+                      {notif.type === 'contribution' ? '💸' : notif.type === 'loan' ? '🏛️' : '🔔'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontFamily: 'DM Sans', fontSize: '14px', color: '#F8FAFC', fontWeight: 600 }}>
+                        {notif.title}
+                      </p>
+                      <p style={{ margin: '2px 0 0', fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8' }}>
+                        {notif.body}
+                      </p>
+                    </div>
+                    <span style={{ fontFamily: 'DM Sans', fontSize: '11px', color: '#475569', flexShrink: 0 }}>
+                      {new Date(notif.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))
               )}
             </div>
           </section>
