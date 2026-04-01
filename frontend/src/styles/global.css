@@ -295,6 +295,11 @@ input::placeholder { color: var(--text-tertiary); }
     0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
+@keyframes shimmer { 
+   0% { background-position: -200% 0; } 
+   100% { background-position: 200% 0; } 
+ }
+
 /* Mobile responsive */ 
  @media (max-width: 768px) { 
    .sidebar { display: none !important; } 

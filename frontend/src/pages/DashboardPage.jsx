@@ -5,6 +5,7 @@ import { Plus, Wallet, Check, Users, ChevronRight, Activity, Bell, ArrowRight, H
 import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import SkeletonCard from '../components/SkeletonCard'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FLOATING INPUT - Liquid Glass Style
@@ -456,80 +457,86 @@ export default function DashboardPage() {
         </header>
 
         {/* Stats Grid */}
-        <div
-          className="stats-grid"
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '44px' }}
-        >
-          {statsData.map((stat, i) => {
-            const Icon = stat.icon
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="glass-card"
-                style={{
-                  padding: '28px 24px',
-                  borderColor: stat.borderColor,
-                  boxShadow: `inset 0 0.5px 0 rgba(255,255,255,0.35), 0 8px 32px ${stat.glowColor}, 0 4px 12px rgba(0,0,0,0.2)`,
-                  cursor: 'default',
-                }}
-              >
-                {/* Icon badge with liquid glass */}
-                <div
-                  className="stat-icon-ring"
+        {loading ? ( 
+          <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '44px' }}> 
+            {[1,2,3,4].map(i => <SkeletonCard key={i} height={160} />)} 
+          </div> 
+        ) : (
+          <div
+            className="stats-grid"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '44px' }}
+          >
+            {statsData.map((stat, i) => {
+              const Icon = stat.icon
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  className="glass-card"
                   style={{
-                    width: '48px',
-                    height: '48px',
-                    background: stat.iconBg,
-                    border: `1px solid ${stat.borderColor}`,
-                    marginBottom: '22px',
-                    boxShadow: `inset 0 0.5px 0 rgba(255,255,255,0.25), 0 4px 12px ${stat.glowColor}`,
+                    padding: '28px 24px',
+                    borderColor: stat.borderColor,
+                    boxShadow: `inset 0 0.5px 0 rgba(255,255,255,0.35), 0 8px 32px ${stat.glowColor}, 0 4px 12px rgba(0,0,0,0.2)`,
+                    cursor: 'default',
                   }}
                 >
-                  <Icon size={22} color={stat.accentColor} strokeWidth={2} />
-                </div>
+                  {/* Icon badge with liquid glass */}
+                  <div
+                    className="stat-icon-ring"
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      background: stat.iconBg,
+                      border: `1px solid ${stat.borderColor}`,
+                      marginBottom: '22px',
+                      boxShadow: `inset 0 0.5px 0 rgba(255,255,255,0.25), 0 4px 12px ${stat.glowColor}`,
+                    }}
+                  >
+                    <Icon size={22} color={stat.accentColor} strokeWidth={2} />
+                  </div>
 
-                {/* Value */}
-                <div style={{
-                  fontSize: '30px',
-                  fontWeight: 700,
-                  color: 'rgba(255,255,255,0.95)',
-                  marginBottom: '5px',
-                  letterSpacing: '-0.03em',
-                  lineHeight: 1,
-                }}>
-                  {stat.label === 'Total Savings' ? `KES ${totalSavings.toLocaleString()}` : 
-                   stat.label === 'Active Loans' ? `${activeLoansCount}` : 
-                   stat.label === 'My Chamas' ? `${chamas.length}` : 
-                   stat.label === 'Credit Score' ? 'N/A' : 
-                   <AnimatedNumber value={stat.val} prefix={stat.pre} />}
-                </div>
+                  {/* Value */}
+                  <div style={{
+                    fontSize: '30px',
+                    fontWeight: 700,
+                    color: 'rgba(255,255,255,0.95)',
+                    marginBottom: '5px',
+                    letterSpacing: '-0.03em',
+                    lineHeight: 1,
+                  }}>
+                    {stat.label === 'Total Savings' ? `KES ${totalSavings.toLocaleString()}` : 
+                     stat.label === 'Active Loans' ? `${activeLoansCount}` : 
+                     stat.label === 'My Chamas' ? `${chamas.length}` : 
+                     stat.label === 'Credit Score' ? 'N/A' : 
+                     <AnimatedNumber value={stat.val} prefix={stat.pre} />}
+                  </div>
 
-                {/* Label */}
-                <div style={{
-                  color: 'rgba(255,255,255,0.42)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  letterSpacing: '0.02em',
-                  textTransform: 'uppercase',
-                }}>
-                  {stat.label}
-                </div>
+                  {/* Label */}
+                  <div style={{
+                    color: 'rgba(255,255,255,0.42)',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    letterSpacing: '0.02em',
+                    textTransform: 'uppercase',
+                  }}>
+                    {stat.label}
+                  </div>
 
-                {/* Bottom accent glow line */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: 0, left: '20%', right: '20%',
-                  height: '1px',
-                  background: `linear-gradient(90deg, transparent, ${stat.accentColor}55, transparent)`,
-                  borderRadius: '0 0 24px 24px',
-                }} />
-              </motion.div>
-            )
-          })}
-        </div>
+                  {/* Bottom accent glow line */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0, left: '20%', right: '20%',
+                    height: '1px',
+                    background: `linear-gradient(90deg, transparent, ${stat.accentColor}55, transparent)`,
+                    borderRadius: '0 0 24px 24px',
+                  }} />
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Content Grid */}
         <div
