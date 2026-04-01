@@ -1,4 +1,4 @@
-﻿const path = require("path");
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -7,6 +7,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 const { validateEnv } = require("./config/validateEnv");
+const { startCronJobs } = require('./services/cronService');
 
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 validateEnv();
@@ -125,6 +126,7 @@ async function start() {
     mongoose.set("bufferCommands", false);
     await mongoose.connect(mongoUri);
     console.log("MongoDB connected");
+    startCronJobs();
     listenWithFallback(startPort, MAX_PORT_TRIES);
   } catch (error) {
     console.error("MongoDB connection error:", error.message);
