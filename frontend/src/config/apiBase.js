@@ -29,6 +29,12 @@ export function getApiBaseURL() {
   return o ? `${o}/api/v1` : '/api/v1'
 }
 
+export function getAiServiceUrl() {
+  const raw = import.meta.env.VITE_AI_SERVICE_URL
+  const normalized = normalizeOrigin(raw)
+  return normalized || ''
+}
+
 /** Socket.IO listens on the API origin (same server as Express), not under /api/v1 */
 export function getSocketUrl() {
   const o = getApiOrigin()

@@ -6,6 +6,7 @@ import { LayoutDashboard, Users, Wallet, CreditCard, Bot, Bell, Settings, LogOut
 import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import { getAiServiceUrl } from '../config/apiBase'
 
 
 
@@ -79,12 +80,20 @@ export default function AICoachPage() {
 
       if (chamaId && user) {
         const userId = user._id || user.id
-        const [scoreRes, healthRes] = await Promise.all([
-          fetch(`http://127.0.0.1:8000/ai/credit-score/${userId}/${chamaId}`).then(r => r.json()).catch(() => null),
-          fetch(`http://127.0.0.1:8000/ai/group-health/${chamaId}`).then(r => r.json()).catch(() => null),
-        ])
+        const aiBase = getAiServiceUrl()
+
+        let scoreRes = null
+        let healthRes = null
+
+        if (aiBase) {
+          ;[scoreRes, healthRes] = await Promise.all([
+            fetch(`${aiBase}/ai/credit-score/${userId}/${chamaId}`).then(r => r.json()).catch(() => null),
+            fetch(`${aiBase}/ai/group-health/${chamaId}`).then(r => r.json()).catch(() => null),
+          ])
+        }
+
         if (scoreRes?.data) setCreditData(scoreRes.data)
-        else setCreditData(MOCK_CREDIT) // fallback for dev
+        else setCreditData(MOCK_CREDIT)
         if (healthRes?.data) setHealthData(healthRes.data)
         else setHealthData(MOCK_HEALTH)
       }
