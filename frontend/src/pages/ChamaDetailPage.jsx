@@ -77,7 +77,21 @@ const MONTHLY_CONTRIBS = [
   { month: 'Feb', amount: 24000 }, { month: 'Mar', amount: 20000 },
 ]
 
-const TABS = ['Overview', 'Members', 'Contributions', 'Loans', 'Votes', 'Reports']
+function OverviewTab({ chama, members, chamaId }) {
+  const [leaderboard, setLeaderboard] = useState([])
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const lbRes = await api.get(`/chamas/${chamaId}/leaderboard`)
+        setLeaderboard(lbRes.data.leaderboard || [])
+      } catch (err) {
+        console.error('Leaderboard fetch error:', err)
+      }
+    }
+    if (chamaId) fetchLeaderboard()
+  }, [chamaId])
+
   const topContributors = [...members].sort((a, b) => (b.totalContributed || 0) - (a.totalContributed || 0)).slice(0, 5)
   const rankColors = ['#F59E0B', '#94A3B8', '#CD7C2F', '#64748B', '#64748B']
 
@@ -169,6 +183,29 @@ const TABS = ['Overview', 'Members', 'Contributions', 'Loans', 'Votes', 'Reports
             <span style={{ color: s.color, fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 18 }}>{s.val}</span>
           </div>
         ))}
+
+        {/* Leaderboard */}
+        <div className="glass-card" style={{ padding: '24px', marginTop: '20px' }}>
+          <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '16px' }}>🏆 Top Contributors</h3>
+          {leaderboard.length === 0 ? (
+            <div style={{ color: '#64748B', textAlign: 'center', padding: 12 }}>No data available</div>
+          ) : leaderboard.map((member, i) => {
+            const medals = ['🥇', '🥈', '🥉']
+            const initials = member.userId?.fullName?.split(' ').map(n => n[0]).join('').slice(0,2) || 'U'
+            return (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < leaderboard.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                <span style={{ fontSize: '20px', width: '28px' }}>{medals[i] || `#${i + 1}`}</span>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne', fontWeight: 700, color: 'white', fontSize: '13px' }}>
+                  {initials}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontFamily: 'DM Sans', color: '#F8FAFC', fontWeight: 600, fontSize: '14px' }}>{member.userId?.fullName}</p>
+                </div>
+                <span style={{ fontFamily: 'Syne', color: '#10B981', fontWeight: 700 }}>KES {(member.totalContributed || 0).toLocaleString()}</span>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
@@ -629,7 +666,7 @@ export default function ChamaDetailPage() {
         {/* Tab Content */}
         <AnimatePresence mode="wait">
           <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-            {activeTab === 'overview' && <OverviewTab chama={chama} members={members} />}
+            {activeTab === 'overview' && <OverviewTab chama={chama} members={members} chamaId={chamaId} />}
             {activeTab === 'members' && <MembersTab members={members} membership={membership} chamaId={chamaId} user={user} />}
             {activeTab === 'contributions' && <ContributionsTab contributions={contributions} chamaId={chamaId} onContribute={() => setShowContribute(true)} />}
             {activeTab === 'loans' && <LoansTab loans={loans} myLoans={myLoans} membership={membership} chamaId={chamaId} />}

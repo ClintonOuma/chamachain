@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Contribution = require('../models/Contribution');
 const Membership = require('../models/Membership');
 const Chama = require('../models/Chama');
-const { createNotification } = require('../services/notificationService');
+const { checkAndAwardBadges } = require('../services/badgeService');
 
 const currentPeriodMonth = () => {
   const d = new Date();
@@ -54,14 +54,13 @@ const initiateContribution = async (req, res) => {
       $inc: { totalBalance: numAmount }
     });
 
-    await createNotification({
-      userId: req.user.userId,
-      chamaId,
-      type: 'contribution',
-      title: 'Contribution Successful',
-      body: `Your contribution of KES ${amount} has been received successfully.`,
-      actionUrl: `/chama/${chamaId}`
-    });
+    const updatedMembership = await Membership.findOne({ userId: req.user.userId, chamaId })
+    const contribCount = await Contribution.countDocuments({ userId: req.user.userId, chamaId, status: 'success' })
+    await checkAndAwardBadges(req.user.userId, chamaId, {
+      contributionCount: contribCount,
+      streak: updatedMembership?.contributionStreak || 0,
+      loanRepaid: false
+    })
 
     return res.status(201).json({ success: true, contribution });
   } catch (err) {

@@ -17,4 +17,20 @@ router.get('/:chamaId/members', protect, getMembers);
 router.patch('/:chamaId/members/:userId/role', protect, requireRole('admin'), changeMemberRole);
 router.delete('/:chamaId/members/:userId', protect, requireRole('admin'), removeMember);
 
+router.get('/:chamaId/leaderboard', protect, async (req, res) => { 
+  try { 
+    const Membership = require('../models/Membership') 
+    const leaderboard = await Membership.find({ 
+      chamaId: req.params.chamaId, 
+      status: 'active' 
+    }) 
+    .populate('userId', 'fullName avatar') 
+    .sort({ totalContributed: -1 }) 
+    .limit(10) 
+    res.json({ success: true, leaderboard }) 
+  } catch (err) { 
+    res.status(500).json({ success: false, message: err.message }) 
+  } 
+}) 
+
 module.exports = router;
