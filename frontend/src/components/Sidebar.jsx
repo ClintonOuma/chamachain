@@ -9,8 +9,8 @@ import useAuthStore from '../store/authStore'
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { id: 'chamas', label: 'My Chamas', icon: Building2, path: '/chamas' },
-  { id: 'contributions', label: 'Contributions', icon: CreditCard, path: '/chamas' },
-  { id: 'loans', label: 'Loans', icon: Landmark, path: '/chamas' },
+  { id: 'contributions', label: 'Contributions', icon: CreditCard, path: '/contributions' },
+  { id: 'loans', label: 'Loans', icon: Landmark, path: '/loans' },
   { id: 'ai-coach', label: 'AI Coach', icon: Bot, path: '/ai-coach' },
   { id: 'notifications', label: 'Notifications', icon: Bell, path: '/notifications' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/profile' },

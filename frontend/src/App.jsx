@@ -13,6 +13,8 @@ import AICoachPage from './pages/AICoachPage'
 import NotificationsPage from './pages/NotificationsPage'
 import ProfilePage from './pages/ProfilePage'
 import ChamasPage from './pages/ChamasPage'
+import ContributionsPage from './pages/ContributionsPage'
+import LoansPage from './pages/LoansPage'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuthStore()
@@ -44,6 +46,12 @@ export default function App() {
         } />
         <Route path="/chama/:chamaId" element={
           <ProtectedRoute><ChamaDetailPage /></ProtectedRoute>
+        } />
+        <Route path="/contributions" element={
+          <ProtectedRoute><ContributionsPage /></ProtectedRoute>
+        } />
+        <Route path="/loans" element={
+          <ProtectedRoute><LoansPage /></ProtectedRoute>
         } />
         <Route path="/ai-coach" element={
           <ProtectedRoute><AICoachPage /></ProtectedRoute>
