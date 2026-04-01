@@ -15,6 +15,7 @@ import ProfilePage from './pages/ProfilePage'
 import ChamasPage from './pages/ChamasPage'
 import ContributionsPage from './pages/ContributionsPage'
 import LoansPage from './pages/LoansPage'
+import JoinPage from './pages/JoinPage'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuthStore()
@@ -62,6 +63,7 @@ export default function App() {
         <Route path="/profile" element={
           <ProtectedRoute><ProfilePage /></ProtectedRoute>
         } />
+        <Route path="/join/:code" element={<JoinPage />} />
         <Route path="*" element={
           <div style={{
             minHeight: '100vh',

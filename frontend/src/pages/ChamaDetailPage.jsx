@@ -515,6 +515,15 @@ export default function ChamaDetailPage() {
   const [membership, setMembership] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(true)
+  const [showContribute, setShowContribute] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyInvite = () => {
+    const link = `${window.location.origin}/join/${chama?.inviteCode}`
+    navigator.clipboard.writeText(link)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -585,6 +594,15 @@ export default function ChamaDetailPage() {
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginBottom: '12px' }}>
+                <button 
+                  onClick={handleCopyInvite} 
+                  className="btn-ghost" 
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', fontSize: '13px' }} 
+                > 
+                  {copied ? '✓ Copied!' : '🔗 Share Invite'} 
+                </button>
+              </div>
               <div style={{ color: '#64748B', fontSize: 13, marginBottom: 4 }}>Group Balance</div>
               <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 36, fontWeight: 700, color: '#0EA5E9' }}>KES {balance.toLocaleString()}</div>
               {membership && <Badge label={membership.role || 'Member'} color={membership.role === 'Admin' ? 'gold' : membership.role === 'Treasurer' ? 'blue' : 'purple'} />}
