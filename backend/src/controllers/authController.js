@@ -4,9 +4,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateTokens');
 const { generateOTP, hashOTP, verifyOTP: compareOTP } = require('../utils/otp');
-
-const JWT_REFRESH_SECRET =
-  process.env.JWT_REFRESH_SECRET;
+const { getJwtRefreshSecret } = require('../config/jwtSecrets');
 
 const register = async (req, res) => {
   try {
@@ -171,7 +169,7 @@ const logout = async (req, res) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+      decoded = jwt.verify(refreshToken, getJwtRefreshSecret());
     } catch {
       return res.status(401).json({
         success: false,
@@ -217,7 +215,7 @@ const refreshToken = async (req, res) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(token, JWT_REFRESH_SECRET);
+      decoded = jwt.verify(token, getJwtRefreshSecret());
     } catch {
       return res.status(401).json({
         success: false,
