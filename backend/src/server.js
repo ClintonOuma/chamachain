@@ -20,16 +20,25 @@ app.use(
   })
 );
 
-const corsOrigins = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-];
-const front = process.env.FRONTEND_URL?.trim();
-if (front) corsOrigins.push(front);
+function buildCorsOrigins() {
+  const origins = new Set([
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ]);
+  const raw =
+    process.env.CORS_ORIGINS?.trim() ||
+    process.env.FRONTEND_URL?.trim() ||
+    "";
+  for (const part of raw.split(",")) {
+    const o = part.trim().replace(/\/$/, "");
+    if (o) origins.add(o);
+  }
+  return [...origins];
+}
 
 app.use(
   cors({
-    origin: corsOrigins,
+    origin: buildCorsOrigins(),
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
