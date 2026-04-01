@@ -12,6 +12,7 @@ dotenv.config({ path: path.join(__dirname, "..", ".env") });
 validateEnv();
 
 const app = express();
+app.set("trust proxy", 1);
 
 // Allow SPA on another origin (e.g. Vite :5173) to read API responses
 app.use(
@@ -19,6 +20,9 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
+
+const corsStrict =
+  process.env.CORS_STRICT === "1" || process.env.CORS_STRICT === "true";
 
 function buildCorsOrigins() {
   const origins = new Set([
@@ -38,7 +42,7 @@ function buildCorsOrigins() {
 
 app.use(
   cors({
-    origin: buildCorsOrigins(),
+    origin: corsStrict ? buildCorsOrigins() : true,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

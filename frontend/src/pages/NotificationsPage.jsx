@@ -6,6 +6,7 @@ import { io } from 'socket.io-client'
 import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import { getSocketUrl } from '../config/apiBase'
 
 
 const isToday = (date) => {
@@ -71,7 +72,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     let socket;
     try {
-      socket = io('http://localhost:4000')
+      socket = io(getSocketUrl(), { transports: ['websocket', 'polling'] })
       socket.on('notification', (newNotif) => {
         setNotifications(prev => [newNotif, ...prev])
         setUnreadCount(prev => prev + 1)

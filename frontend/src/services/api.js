@@ -1,8 +1,13 @@
 import axios from 'axios'
+import { getApiBaseURL } from '../config/apiBase'
 
-const baseURL = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/api/v1`
-  : '/api/v1'
+const baseURL = getApiBaseURL()
+
+if (import.meta.env.PROD && !baseURL.startsWith('http')) {
+  console.warn(
+    '[ChamaChain] API calls use relative /api/v1. Set VITE_API_URL on your frontend host at build time unless you proxy /api to the backend.'
+  )
+}
 
 const api = axios.create({
   baseURL,
