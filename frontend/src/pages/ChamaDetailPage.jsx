@@ -448,12 +448,28 @@ function VotesTab({ votes, userId }) {
   )
 }
 
-function ReportsTab() {
+function ReportsTab({ chamaId }) {
+  const handleExportCSV = () => { 
+    const token = localStorage.getItem('accessToken') 
+    const baseURL = import.meta.env.VITE_API_URL || '' 
+    window.open(`${baseURL}/api/v1/reports/${chamaId}/csv?token=${token}`, '_blank') 
+  } 
+
+  const handleExportPDF = () => { 
+    const token = localStorage.getItem('accessToken') 
+    const baseURL = import.meta.env.VITE_API_URL || '' 
+    window.open(`${baseURL}/api/v1/reports/${chamaId}/pdf?token=${token}`, '_blank') 
+  }
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginBottom: 24 }}>
-        <button onClick={() => alert('CSV export coming soon')} style={{ ...BTN_PRIMARY, background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', boxShadow: 'none', border: '1px solid rgba(255,255,255,0.1)' }}><Download size={16} /> Export CSV</button>
-        <button onClick={() => alert('PDF export coming soon')} style={{ ...BTN_PRIMARY, background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', boxShadow: 'none', border: '1px solid rgba(255,255,255,0.1)' }}><Download size={16} /> Export PDF</button>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', justifyContent: 'flex-end' }}> 
+        <button className="btn-ghost" onClick={handleExportCSV} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
+          📊 Export CSV 
+        </button> 
+        <button className="btn-ghost" onClick={handleExportPDF} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
+          📄 Export PDF 
+        </button> 
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 20, marginBottom: 32 }}>
         {[
@@ -768,7 +784,7 @@ export default function ChamaDetailPage() {
             {activeTab === 'contributions' && <ContributionsTab contributions={contributions} chamaId={chamaId} onContribute={() => setShowContribute(true)} />}
             {activeTab === 'loans' && <LoansTab loans={loans} myLoans={myLoans} membership={membership} chamaId={chamaId} />}
             {activeTab === 'votes' && <VotesTab votes={loans.filter(l => l.status === 'pending')} userId={user?._id} />}
-            {activeTab === 'reports' && <ReportsTab />}
+            {activeTab === 'reports' && <ReportsTab chamaId={chamaId} />}
             {activeTab === 'settings' && ( 
               <div> 
                 {/* Frozen Banner */} 

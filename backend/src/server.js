@@ -74,6 +74,9 @@ app.use('/api/v1/users', userRoutes);
 const aiRoutes = require('./routes/aiRoutes');
 app.use('/api/v1/ai', aiRoutes);
 
+const reportRoutes = require('./routes/reportRoutes') 
+app.use('/api/v1/reports', reportRoutes) 
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
