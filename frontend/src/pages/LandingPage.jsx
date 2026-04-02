@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bot, ShieldCheck, Smartphone, Users, TrendingUp, Activity, Star, ArrowRight, Zap } from 'lucide-react'
+import useAuthStore from '../store/authStore'
+import usePageTitle from '../hooks/usePageTitle'
 
 /* ─────────────────────────────────────────────────────────────────
    INJECT KEYFRAMES + FONTS
@@ -141,6 +143,14 @@ const memberInitials = ['AM', 'JW', 'FO']
    COMPONENT
 ───────────────────────────────────────────────────────────────── */
 export default function LandingPage() {
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuthStore()
+  usePageTitle('AI-Powered Digital Chama Platform')
+
+  useEffect(() => {
+    if (isAuthenticated) navigate('/dashboard')
+  }, [isAuthenticated, navigate])
+
   useEffect(() => {
     const el = document.createElement('style')
     el.id = '__lp_styles'

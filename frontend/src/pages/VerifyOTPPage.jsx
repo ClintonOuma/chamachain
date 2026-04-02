@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Smartphone, Loader2, ArrowLeft } from 'lucide-react'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import usePageTitle from '../hooks/usePageTitle'
 
 export default function VerifyOTPPage() {
+  usePageTitle('Verify Phone')
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
 

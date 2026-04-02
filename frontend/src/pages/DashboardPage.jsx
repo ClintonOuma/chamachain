@@ -6,6 +6,7 @@ import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
 import SkeletonCard from '../components/SkeletonCard'
+import usePageTitle from '../hooks/usePageTitle'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FLOATING INPUT - Liquid Glass Style
@@ -212,6 +213,7 @@ function GlassModal({ children, onClose }) {
 // MAIN DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════
 export default function DashboardPage() {
+  usePageTitle('Dashboard')
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
 

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import invitationService from '../services/invitationService';
+import usePageTitle from '../hooks/usePageTitle';
 import './JoinChama.css';
 
 const JoinChama = () => {
+  usePageTitle('Join Chama');
   const [inviteCode, setInviteCode] = useState('');
   const [chamaInfo, setChamaInfo] = useState(null);
   const [loading, setLoading] = useState(false);

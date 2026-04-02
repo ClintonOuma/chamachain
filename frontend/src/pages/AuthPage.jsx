@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2, X, CheckCircle2, XCircle } from 'lucide-react'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import usePageTitle from '../hooks/usePageTitle'
 
 // Reusable SVG for Google Icon
 const GoogleIcon = () => (
@@ -514,6 +515,7 @@ export default function AuthPage() {
   
   // Determine active tab from URL
   const isLogin = location.pathname === '/login'
+  usePageTitle(isLogin ? 'Sign In' : 'Create Account')
   const [activeTab, setActiveTab] = useState(isLogin ? 'login' : 'register')
   const [error, setError] = useState('')
 

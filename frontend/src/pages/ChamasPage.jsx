@@ -4,8 +4,10 @@ import { motion } from 'framer-motion'
 import { Plus, Users, Wallet, ArrowRight } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import api from '../services/api'
+import usePageTitle from '../hooks/usePageTitle'
 
 export default function ChamasPage() {
+  usePageTitle('My Chamas')
   const [chamas, setChamas] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)

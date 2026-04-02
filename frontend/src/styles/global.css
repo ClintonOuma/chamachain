@@ -1,3 +1,58 @@
+/* Smooth page transitions */ 
+* { scroll-behavior: smooth; } 
+ 
+/* Better focus styles */ 
+*:focus-visible { 
+  outline: 2px solid var(--primary); 
+  outline-offset: 2px; 
+  border-radius: 4px; 
+} 
+ 
+/* Selection color */ 
+::selection { 
+  background: rgba(14, 165, 233, 0.3); 
+  color: #F8FAFC; 
+} 
+ 
+/* Table styles */ 
+table { width: 100%; border-collapse: collapse; } 
+ 
+/* Disabled button */ 
+button:disabled { 
+  opacity: 0.5; 
+  cursor: not-allowed; 
+  transform: none !important; 
+} 
+ 
+/* Link styles */ 
+a { 
+  color: var(--primary); 
+  text-decoration: none; 
+  transition: opacity 0.2s ease; 
+} 
+a:hover { opacity: 0.8; } 
+ 
+/* Number font */ 
+.font-mono { font-family: 'JetBrains Mono', monospace; } 
+ 
+/* Gradient text */ 
+.gradient-text { 
+  background: linear-gradient(135deg, #0EA5E9, #8B5CF6); 
+  -webkit-background-clip: text; 
+  -webkit-text-fill-color: transparent; 
+  background-clip: text; 
+} 
+ 
+/* Status badges */ 
+.badge-success { background: rgba(16,185,129,0.15); color: #10B981; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans'; } 
+.badge-warning { background: rgba(245,158,11,0.15); color: #F59E0B; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans'; } 
+.badge-danger { background: rgba(239,68,68,0.15); color: #EF4444; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans'; } 
+.badge-info { background: rgba(14,165,233,0.15); color: #0EA5E9; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans'; } 
+ 
+/* Hide scrollbar on horizontal scroll containers */ 
+.scroll-x { overflow-x: auto; scrollbar-width: none; } 
+.scroll-x::-webkit-scrollbar { display: none; } 
+
 @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;

@@ -7,6 +7,7 @@ import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
 import { getSocketUrl } from '../config/apiBase'
+import usePageTitle from '../hooks/usePageTitle'
 
 
 const isToday = (date) => {
@@ -42,6 +43,7 @@ const MOCK_NOTIFICATIONS = [
 ]
 
 export default function NotificationsPage() {
+  usePageTitle('Notifications')
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
 

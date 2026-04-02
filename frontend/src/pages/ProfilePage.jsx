@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import usePageTitle from '../hooks/usePageTitle'
 
 
 
@@ -135,6 +136,7 @@ function ToggleSwitch({ isOn, onToggle }) {
 }
 
 export default function ProfilePage() {
+  usePageTitle('My Profile')
   const navigate = useNavigate()
   const { user, logout, updateUser } = useAuthStore()
 

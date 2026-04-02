@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
  import api from '../services/api' 
  import useAuthStore from '../store/authStore' 
  import { getAiServiceUrl } from '../config/apiBase' 
+ import usePageTitle from '../hooks/usePageTitle' 
  
  const AI_URL = getAiServiceUrl() 
  
@@ -63,6 +64,7 @@ import { useState, useEffect } from 'react'
  } 
  
  export default function AICoachPage() { 
+   usePageTitle('AI Coach') 
    const { user } = useAuthStore() 
    const [chamas, setChamas] = useState([]) 
    const [selectedChama, setSelectedChama] = useState('') 

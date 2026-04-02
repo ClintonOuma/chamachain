@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Eye, EyeOff, Loader2, X } from 'lucide-react'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import usePageTitle from '../hooks/usePageTitle'
 
 // Reusable SVG for Google Icon
 const GoogleIcon = () => (
@@ -109,6 +110,7 @@ function FloatingInput({ label, type = 'text', value, onChange, onBlur, error, r
 }
 
 export default function LoginPage() {
+  usePageTitle('Sign In')
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
 

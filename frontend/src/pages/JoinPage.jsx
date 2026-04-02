@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
  import { useParams, useNavigate } from 'react-router-dom' 
  import { motion } from 'framer-motion' 
  import api from '../services/api' 
- import useAuthStore from '../store/authStore' 
- 
- export default function JoinPage() { 
-   const { code } = useParams() 
+import useAuthStore from '../store/authStore' 
+import usePageTitle from '../hooks/usePageTitle'
+
+export default function JoinPage() { 
+  usePageTitle('Accept Invitation')
+  const { code } = useParams() 
    const navigate = useNavigate() 
    const { isAuthenticated } = useAuthStore() 
    const [loading, setLoading] = useState(false) 

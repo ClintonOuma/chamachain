@@ -10,6 +10,7 @@ import {
 import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import usePageTitle from '../hooks/usePageTitle'
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -610,6 +611,7 @@ function AuditLogSection({ chamaId, membership }) {
 export default function ChamaDetailPage() {
   const { chamaId } = useParams()
   const { user } = useAuthStore()
+  usePageTitle('Chama Details')
   const [chama, setChama] = useState(null)
   const [members, setMembers] = useState([])
   const [contributions, setContributions] = useState([])

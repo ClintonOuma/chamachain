@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2, X, CheckCircle2, XCircle } from 'lucide-react'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import usePageTitle from '../hooks/usePageTitle'
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -233,6 +234,7 @@ function getPwStrength(pw) {
 }
 
 export default function RegisterPage() {
+  usePageTitle('Create Account')
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
 
