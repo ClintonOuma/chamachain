@@ -1,8 +1,8 @@
-fastapi 
- uvicorn[standard] 
- pymongo 
- pandas 
- scikit-learn 
- numpy 
- python-dotenv 
- dnspython 
+fastapi
+uvicorn[standard]
+pymongo
+pandas
+scikit-learn
+numpy
+python-dotenv
+dnspython
