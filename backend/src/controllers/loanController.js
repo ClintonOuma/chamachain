@@ -5,6 +5,7 @@ const Chama = require('../models/Chama');
 const { createNotification } = require('../services/notificationService');
 const { logAction } = require('../services/auditService');
 const mpesaService = require('../services/mpesaService');
+const blockchainService = require('../services/blockchainService');
 
 const PURPOSES = ['medical', 'education', 'business', 'emergency', 'other'];
 
@@ -109,6 +110,20 @@ const requestLoan = async (req, res) => {
       action: 'loan_requested',
       metadata: { loanId: loan._id, amount: numAmount }
     });
+
+    // Create on-chain vote
+    const memberCount = await Membership.countDocuments({ chamaId, status: 'active' });
+    const threshold = Math.ceil(memberCount * (chamaDoc.settings?.loanVoteThreshold || 51) / 100);
+    
+    try {
+      const tx = await blockchainService.createLoanVote(loan._id, threshold);
+      if (tx) {
+        loan.blockchainVoteId = tx.hash;
+        await loan.save();
+      }
+    } catch (err) {
+      console.warn('Blockchain vote creation failed:', err.message);
+    }
 
     return res.status(201).json({ success: true, loan });
 
@@ -327,6 +342,44 @@ const mpesaRepayCallback = async (req, res) => {
   }
 };
 
+const castVote = async (req, res) => {
+  try {
+    const { loanId } = req.params;
+    const { support } = req.body;
+
+    const loan = await Loan.findById(loanId);
+    if (!loan) {
+      return res.status(404).json({ success: false, message: 'Loan not found' });
+    }
+
+    if (loan.status !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Loan is not pending' });
+    }
+
+    const membership = await Membership.findOne({
+      userId: req.user.userId,
+      chamaId: loan.chamaId,
+      status: 'active'
+    });
+    if (!membership) {
+      return res.status(403).json({ success: false, message: 'Not a member of this chama' });
+    }
+
+    const tx = await blockchainService.castLoanVote(loan._id, support);
+    
+    // Check if vote finalized on-chain
+    const voteStatus = await blockchainService.getLoanVoteStatus(loan._id);
+    if (voteStatus && voteStatus.finalized && voteStatus.approved) {
+      // Logic for auto-approval if needed, or leave to admin
+    }
+
+    return res.json({ success: true, transactionHash: tx?.hash });
+
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   requestLoan,
   getLoans,
@@ -334,5 +387,7 @@ module.exports = {
   approveLoan,
   rejectLoan,
   repayLoan,
-  mpesaRepayCallback
+  mpesaRepayCallback,
+  castVote
 };
+
