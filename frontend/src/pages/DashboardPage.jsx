@@ -321,7 +321,19 @@ export default function DashboardPage() {
     navigate('/')
   }
 
-  const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const todayStr = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date())
+
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 18) return 'Good afternoon'
+    return 'Good evening'
+  }
+
   const creditScore = 'N/A'
 
   // Stats with accent colors matching Apple's vibrant palette
@@ -414,7 +426,7 @@ export default function DashboardPage() {
                 lineHeight: 1.2,
               }}
             >
-              Good morning, {user?.fullName?.split(' ')[0] || 'User'}
+              {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
             </motion.h1>
             <motion.div
               initial={{ opacity: 0 }}
