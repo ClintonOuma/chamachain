@@ -100,11 +100,12 @@ export default function VerifyOTPPage() {
       // Brief delay to show success flash before navigating
       setTimeout(() => {
         setAuth(user, accessToken, refreshToken)
+        // Clear temp storage
         localStorage.removeItem('pendingUserId')
         localStorage.removeItem('pendingPhone')
         localStorage.removeItem('pendingEmail')
-        navigate('/dashboard')
-      }, 600)
+        navigate('/onboarding')
+      }, 1500)
       
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid OTP. Please try again.')

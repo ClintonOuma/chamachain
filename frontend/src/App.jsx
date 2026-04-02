@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom' 
 import useAuthStore from './store/authStore' 
 import LoadingScreen from './components/LoadingScreen' 
+import useSocket from './hooks/useSocket'
 
 import LandingPage from './pages/LandingPage' 
 import LoginPage from './pages/LoginPage' 
@@ -15,6 +16,7 @@ import AICoachPage from './pages/AICoachPage'
 import NotificationsPage from './pages/NotificationsPage' 
 import ProfilePage from './pages/ProfilePage' 
 import JoinPage from './pages/JoinPage' 
+import OnboardingPage from './pages/OnboardingPage' 
 
 const ProtectedRoute = ({ children }) => { 
   const { isAuthenticated } = useAuthStore() 
@@ -28,6 +30,7 @@ const PublicRoute = ({ children }) => {
 
 export default function App() { 
   const [appLoading, setAppLoading] = useState(true) 
+  useSocket()
   useEffect(() => { setTimeout(() => setAppLoading(false), 1200) }, []) 
   if (appLoading) return <LoadingScreen /> 
 
@@ -38,7 +41,9 @@ export default function App() {
         <Route path="/" element={<LandingPage />} /> 
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} /> 
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} /> 
+        <Route path="/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} /> 
         <Route path="/join/:code" element={<JoinPage />} /> 
+        <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} /> 
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} /> 
         <Route path="/chamas" element={<ProtectedRoute><ChamasPage /></ProtectedRoute>} /> 
         <Route path="/chama/:chamaId" element={<ProtectedRoute><ChamaDetailPage /></ProtectedRoute>} /> 
