@@ -259,6 +259,25 @@ const removeMember = async (req, res) => {
   }
 };
 
+const freezeChama = async (req, res) => {
+  try {
+    const chama = await Chama.findById(req.params.chamaId)
+    if (!chama) return res.status(404).json({ success: false, message: 'Chama not found' })
+    chama.status = chama.status === 'frozen' ? 'active' : 'frozen'
+    await chama.save()
+    const { logAction } = require('../services/auditService')
+    await logAction({
+      chamaId: chama._id,
+      performedBy: req.user.userId,
+      action: chama.status === 'frozen' ? 'chama_frozen' : 'chama_unfrozen',
+      metadata: { status: chama.status }
+    })
+    res.json({ success: true, status: chama.status, message: `Chama ${chama.status}` })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
 module.exports = {
   createChama,
   getMyChamas,
@@ -267,5 +286,6 @@ module.exports = {
   joinChama,
   getMembers,
   changeMemberRole,
-  removeMember
+  removeMember,
+  freezeChama
 };

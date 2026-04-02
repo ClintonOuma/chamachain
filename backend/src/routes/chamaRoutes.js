@@ -5,8 +5,9 @@ const { requireRole } = require('../middleware/rbac');
 const {
   createChama, getMyChamas, getChamaById,
   updateChama, joinChama, getMembers,
-  changeMemberRole, removeMember
+  changeMemberRole, removeMember, freezeChama
 } = require('../controllers/chamaController');
+const AuditLog = require('../models/AuditLog')
 
 router.post('/', protect, createChama);
 router.get('/', protect, getMyChamas);
@@ -16,6 +17,20 @@ router.post('/join', protect, joinChama);
 router.get('/:chamaId/members', protect, getMembers);
 router.patch('/:chamaId/members/:userId/role', protect, requireRole('admin'), changeMemberRole);
 router.delete('/:chamaId/members/:userId', protect, requireRole('admin'), removeMember);
+router.patch('/:chamaId/freeze', protect, requireRole('admin'), freezeChama)
+
+router.get('/:chamaId/audit', protect, requireRole('admin', 'treasurer'), async (req, res) => { 
+  try { 
+    const logs = await AuditLog.find({ chamaId: req.params.chamaId }) 
+      .populate('performedBy', 'fullName email') 
+      .populate('targetUserId', 'fullName') 
+      .sort({ createdAt: -1 }) 
+      .limit(50) 
+    res.json({ success: true, logs }) 
+  } catch (err) { 
+    res.status(500).json({ success: false, message: err.message }) 
+  } 
+}) 
 
 router.get('/:chamaId/leaderboard', protect, async (req, res) => { 
   try { 

@@ -30,9 +30,13 @@ export function getApiBaseURL() {
 }
 
 export function getAiServiceUrl() {
-  const raw = import.meta.env.VITE_AI_SERVICE_URL
-  const normalized = normalizeOrigin(raw)
-  return normalized || ''
+  const fromVite = normalizeOrigin(import.meta.env.VITE_AI_URL || import.meta.env.VITE_AI_SERVICE_URL)
+  if (fromVite) return fromVite
+  if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__?.VITE_AI_URL) {
+    const r = normalizeOrigin(window.__RUNTIME_CONFIG__.VITE_AI_URL)
+    if (r) return r
+  }
+  return import.meta.env.DEV ? 'http://127.0.0.1:8000' : ''
 }
 
 /** Socket.IO listens on the API origin (same server as Express), not under /api/v1 */

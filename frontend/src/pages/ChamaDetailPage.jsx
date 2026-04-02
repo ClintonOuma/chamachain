@@ -541,6 +541,56 @@ function ModalWrap({ onClose, title, children }) {
 
 const TABS = ['Overview', 'Members', 'Contributions', 'Loans', 'Votes', 'Reports']
 
+function AuditLogSection({ chamaId, membership }) { 
+  const [logs, setLogs] = useState([]) 
+  const [loading, setLoading] = useState(true) 
+
+  useEffect(() => { 
+    if (membership?.role !== 'admin' && membership?.role !== 'treasurer') return 
+    api.get(`/chamas/${chamaId}/audit`) 
+      .then(res => setLogs(res.data.logs || [])) 
+      .catch(() => {}) 
+      .finally(() => setLoading(false)) 
+  }, [chamaId, membership]) 
+
+  const actionLabels = { 
+    LOAN_REQUESTED: { label: 'Loan Requested', color: '#8B5CF6' }, 
+    LOAN_APPROVED: { label: 'Loan Approved', color: '#10B981' }, 
+    LOAN_REJECTED: { label: 'Loan Rejected', color: '#EF4444' }, 
+    LOAN_REPAYMENT: { label: 'Loan Repayment', color: '#0EA5E9' }, 
+    MEMBER_REMOVED: { label: 'Member Removed', color: '#F59E0B' }, 
+    ROLE_CHANGED: { label: 'Role Changed', color: '#0EA5E9' }, 
+    CHAMA_FROZEN: { label: 'Chama Frozen', color: '#F59E0B' }, 
+    CHAMA_UNFROZEN: { label: 'Chama Unfrozen', color: '#10B981' }, 
+  } 
+
+  return ( 
+    <div className="glass-card" style={{ padding: '28px', marginTop: '24px' }}> 
+      <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '20px' }}>📋 Audit Log</h3> 
+      {loading ? ( 
+        <p style={{ color: '#64748B', fontFamily: 'DM Sans' }}>Loading...</p> 
+      ) : logs.length === 0 ? ( 
+        <p style={{ color: '#64748B', fontFamily: 'DM Sans' }}>No audit logs yet</p> 
+      ) : ( 
+        logs.map((log, i) => { 
+          const action = actionLabels[log.action?.toUpperCase()] || { label: log.action, color: '#64748B' } 
+          return ( 
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < logs.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}> 
+              <span style={{ background: `${action.color}22`, color: action.color, padding: '3px 10px', borderRadius: '10px', fontSize: '12px', fontFamily: 'DM Sans', flexShrink: 0 }}>{action.label}</span> 
+              <div style={{ flex: 1 }}> 
+                <span style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8' }}>by </span> 
+                <span style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#F8FAFC', fontWeight: 600 }}>{log.performedBy?.fullName}</span> 
+                {log.targetUserId && <span style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8' }}> → {log.targetUserId?.fullName}</span>} 
+              </div> 
+              <span style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#475569', flexShrink: 0 }}>{new Date(log.createdAt).toLocaleDateString()}</span> 
+            </div> 
+          ) 
+        }) 
+      )} 
+    </div> 
+  ) 
+}
+
 export default function ChamaDetailPage() {
   const { chamaId } = useParams()
   const { user } = useAuthStore()
@@ -554,6 +604,35 @@ export default function ChamaDetailPage() {
   const [loading, setLoading] = useState(true)
   const [showContribute, setShowContribute] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  const [settings, setSettings] = useState({ 
+    minContribution: 500, 
+    contributionFrequency: 'monthly', 
+    contributionDueDay: 1, 
+    loanVoteThreshold: 51, 
+    maxLoanMultiplier: 3, 
+    latePenaltyRate: 0.5 
+  }) 
+
+  const handleSaveSettings = async () => { 
+    try { 
+      await api.patch(`/chamas/${chamaId}`, { settings }) 
+      alert('Settings saved successfully!') 
+    } catch (err) { 
+      alert(err.response?.data?.message || 'Failed to save settings') 
+    } 
+  } 
+
+  const handleFreezeChama = async () => { 
+    if (!window.confirm(`Are you sure you want to ${chama?.status === 'frozen' ? 'unfreeze' : 'freeze'} this chama?`)) return 
+    try { 
+      const res = await api.patch(`/chamas/${chamaId}/freeze`) 
+      alert(res.data.message) 
+      window.location.reload() 
+    } catch (err) { 
+      alert(err.response?.data?.message || 'Failed to update chama status') 
+    } 
+  } 
 
   const handleCopyInvite = () => {
     const link = `${window.location.origin}/join/${chama?.inviteCode}`
@@ -572,6 +651,16 @@ export default function ChamaDetailPage() {
           api.get(`/contributions/${chamaId}`)
         ])
         setChama(chamaRes.data.chama)
+        if (chamaRes.data.chama?.settings) {
+          setSettings({
+            minContribution: chamaRes.data.chama.settings.minContribution || 500,
+            contributionFrequency: chamaRes.data.chama.settings.contributionFrequency || 'monthly',
+            contributionDueDay: chamaRes.data.chama.settings.contributionDueDay || 1,
+            loanVoteThreshold: chamaRes.data.chama.settings.loanVoteThreshold || 51,
+            maxLoanMultiplier: chamaRes.data.chama.settings.maxLoanMultiplier || 3,
+            latePenaltyRate: chamaRes.data.chama.settings.latePenaltyRate || 0.5
+          })
+        }
         setMembers(membersRes.data.members || [])
         setContributions(contribRes.data.contributions || [])
 
@@ -649,8 +738,16 @@ export default function ChamaDetailPage() {
 
         {/* Tab bar */}
         <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 4, marginBottom: 36, width: 'fit-content' }}>
-          {TABS.map((tab, i) => {
-            const tabId = tab.toLowerCase()
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'members', label: 'Members' },
+            { id: 'contributions', label: 'Contributions' },
+            { id: 'loans', label: 'Loans' },
+            { id: 'votes', label: 'Votes' },
+            { id: 'reports', label: 'Reports' },
+            ...(membership?.role === 'admin' ? [{ id: 'settings', label: '⚙️ Settings' }] : [])
+          ].map((tab, i) => {
+            const tabId = tab.id
             return (
               <button key={i} onClick={() => setActiveTab(tabId)} style={{
                 padding: '10px 22px', borderRadius: 10, border: 'none', cursor: 'pointer',
@@ -658,7 +755,7 @@ export default function ChamaDetailPage() {
                 background: activeTab === tabId ? '#0EA5E9' : 'transparent',
                 color: activeTab === tabId ? '#FFF' : '#94A3B8',
                 transition: 'all 0.2s ease'
-              }}>{tab}</button>
+              }}>{tab.label}</button>
             )
           })}
         </div>
@@ -672,6 +769,76 @@ export default function ChamaDetailPage() {
             {activeTab === 'loans' && <LoansTab loans={loans} myLoans={myLoans} membership={membership} chamaId={chamaId} />}
             {activeTab === 'votes' && <VotesTab votes={loans.filter(l => l.status === 'pending')} userId={user?._id} />}
             {activeTab === 'reports' && <ReportsTab />}
+            {activeTab === 'settings' && ( 
+              <div> 
+                {/* Frozen Banner */} 
+                {chama?.status === 'frozen' && ( 
+                  <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}> 
+                    <span style={{ fontSize: '20px' }}>🔒</span> 
+                    <p style={{ margin: 0, fontFamily: 'DM Sans', color: '#F59E0B' }}>This chama is currently frozen. No contributions or loans are allowed.</p> 
+                  </div> 
+                )} 
+ 
+                {/* Settings Form */} 
+                <div className="glass-card" style={{ padding: '28px', marginBottom: '24px' }}> 
+                  <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '24px' }}>Contribution Settings</h3> 
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}> 
+                    <div> 
+                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Minimum Contribution (KES)</label> 
+                      <input type="number" value={settings.minContribution} onChange={e => setSettings(p => ({ ...p, minContribution: Number(e.target.value) }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }} /> 
+                    </div> 
+                    <div> 
+                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Frequency</label> 
+                      <select value={settings.contributionFrequency} onChange={e => setSettings(p => ({ ...p, contributionFrequency: e.target.value }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }}> 
+                        <option value="monthly">Monthly</option> 
+                        <option value="weekly">Weekly</option> 
+                      </select> 
+                    </div> 
+                    <div> 
+                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Due Day (1-28)</label> 
+                      <input type="number" min="1" max="28" value={settings.contributionDueDay} onChange={e => setSettings(p => ({ ...p, contributionDueDay: Number(e.target.value) }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }} /> 
+                    </div> 
+                    <div> 
+                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Max Loan Multiplier</label> 
+                      <input type="number" min="1" max="10" value={settings.maxLoanMultiplier} onChange={e => setSettings(p => ({ ...p, maxLoanMultiplier: Number(e.target.value) }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }} /> 
+                    </div> 
+                    <div> 
+                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Loan Vote Threshold (%)</label> 
+                      <input type="number" min="51" max="100" value={settings.loanVoteThreshold} onChange={e => setSettings(p => ({ ...p, loanVoteThreshold: Number(e.target.value) }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }} /> 
+                    </div> 
+                    <div> 
+                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Late Penalty Rate (% per day)</label> 
+                      <input type="number" step="0.1" value={settings.latePenaltyRate} onChange={e => setSettings(p => ({ ...p, latePenaltyRate: Number(e.target.value) }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }} /> 
+                    </div> 
+                  </div> 
+                  <button onClick={handleSaveSettings} style={{ ...BTN_PRIMARY, marginTop: '24px' }}>Save Settings</button> 
+                </div> 
+ 
+                {/* Danger Zone */} 
+                <div className="glass-card" style={{ padding: '28px', border: '1px solid rgba(239,68,68,0.2)' }}> 
+                  <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#EF4444', marginBottom: '16px' }}>⚠️ Danger Zone</h3> 
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}> 
+                    <div> 
+                      <p style={{ fontFamily: 'DM Sans', color: '#F8FAFC', margin: '0 0 4px', fontWeight: 600 }}> 
+                        {chama?.status === 'frozen' ? 'Unfreeze Chama' : 'Freeze Chama'} 
+                      </p> 
+                      <p style={{ fontFamily: 'DM Sans', color: '#64748B', margin: 0, fontSize: '13px' }}> 
+                        {chama?.status === 'frozen' ? 'Allow contributions and loans again' : 'Pause all contributions and loans'} 
+                      </p> 
+                    </div> 
+                    <button 
+                      onClick={handleFreezeChama} 
+                      style={{ padding: '10px 20px', borderRadius: '12px', background: chama?.status === 'frozen' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: chama?.status === 'frozen' ? '#10B981' : '#EF4444', border: `1px solid ${chama?.status === 'frozen' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`, cursor: 'pointer', fontFamily: 'DM Sans', fontWeight: 600 }} 
+                    > 
+                      {chama?.status === 'frozen' ? 'Unfreeze' : 'Freeze'} 
+                    </button> 
+                  </div> 
+                </div> 
+ 
+                {/* Audit Log */} 
+                <AuditLogSection chamaId={chamaId} membership={membership} /> 
+              </div> 
+            )}
           </motion.div>
         </AnimatePresence>
 

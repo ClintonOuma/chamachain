@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react'
  import Sidebar from '../components/Sidebar' 
  import api from '../services/api' 
  import useAuthStore from '../store/authStore' 
+ import { getAiServiceUrl } from '../config/apiBase' 
  
- const AI_URL = import.meta.env.VITE_AI_URL || 'http://127.0.0.1:8000' 
+ const AI_URL = getAiServiceUrl() 
  
  function ScoreGauge({ score }) { 
    const radius = 80 
@@ -68,8 +69,10 @@ import { useState, useEffect } from 'react'
    const [creditData, setCreditData] = useState(null) 
    const [healthData, setHealthData] = useState(null) 
    const [loading, setLoading] = useState(false) 
+   const [error, setError] = useState(null) 
  
    useEffect(() => { 
+     console.log('AICoach: Using AI Service URL:', AI_URL) 
      api.get('/chamas').then(res => { 
        const list = res.data.chamas || [] 
        setChamas(list) 
@@ -84,18 +87,37 @@ import { useState, useEffect } from 'react'
      if (!selectedChama) return 
      const fetchAI = async () => { 
        setLoading(true) 
+       setError(null) 
        setCreditData(null) 
        setHealthData(null) 
        try { 
          const userId = user?.id || user?._id 
+         if (!userId) { 
+           setError('User session not found. Please re-login.') 
+           return 
+         } 
+ 
+         const scoreUrl = `${AI_URL}/ai/credit-score/${userId}/${selectedChama}` 
+         const healthUrl = `${AI_URL}/ai/group-health/${selectedChama}` 
+ 
+         console.log('Fetching AI data from:', { scoreUrl, healthUrl }) 
+ 
          const [scoreRes, healthRes] = await Promise.all([ 
-           fetch(`${AI_URL}/ai/credit-score/${userId}/${selectedChama}`).then(r => r.json()), 
-           fetch(`${AI_URL}/ai/group-health/${selectedChama}`).then(r => r.json()) 
+           fetch(scoreUrl).then(async r => { 
+             if (!r.ok) throw new Error(`Score API failed: ${r.status}`) 
+             return r.json() 
+           }), 
+           fetch(healthUrl).then(async r => { 
+             if (!r.ok) throw new Error(`Health API failed: ${r.status}`) 
+             return r.json() 
+           }) 
          ]) 
+ 
          if (scoreRes.success) setCreditData(scoreRes.data) 
          if (healthRes.success) setHealthData(healthRes.data) 
        } catch (err) { 
-         console.error('AI fetch error:', err) 
+         console.error('AI fetch error details:', err) 
+         setError(`Connection failed: ${err.message}. Target URL: ${AI_URL}`) 
        } finally { 
          setLoading(false) 
        } 
@@ -220,9 +242,23 @@ import { useState, useEffect } from 'react'
                </motion.div> 
              )} 
            </> 
+         ) : error ? ( 
+           <div style={{ textAlign: 'center', padding: '60px 0', background: 'rgba(239,68,68,0.05)', borderRadius: '16px', border: '1px dashed rgba(239,68,68,0.2)' }}> 
+             <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div> 
+             <p style={{ color: '#EF4444', fontFamily: 'Syne', fontSize: '18px', fontWeight: 600 }}>{error}</p> 
+             <p style={{ color: '#64748B', fontFamily: 'DM Sans', marginTop: '8px', maxWidth: '500px', margin: '8px auto 0' }}> 
+               Please ensure the AI service is live on Render and that the <strong>VITE_AI_URL</strong> environment variable is set correctly in Vercel. 
+             </p> 
+             <button 
+               onClick={() => window.location.reload()} 
+               style={{ marginTop: '24px', padding: '10px 24px', borderRadius: '12px', background: '#EF4444', color: 'white', border: 'none', fontFamily: 'DM Sans', fontWeight: 600, cursor: 'pointer' }} 
+             > 
+               Retry Connection 
+             </button> 
+           </div> 
          ) : ( 
            <div style={{ textAlign: 'center', padding: '60px 0' }}> 
-             <p style={{ color: '#64748B', fontFamily: 'DM Sans' }}>Could not load AI data. Make sure the AI service is running.</p> 
+             <p style={{ color: '#64748B', fontFamily: 'DM Sans' }}>No AI data available for this chama.</p> 
            </div> 
          )} 
        </main> 

@@ -18,6 +18,10 @@ app.add_middleware(
 
 app.include_router(scoring_router, prefix="/ai")
 
+@app.get("/")
+def read_root():
+    return {"status": "ok", "service": "ChamaChain AI Service", "version": "1.0.0"}
+
 @app.get("/health")
 def health():
     return {"success": True, "message": "ChamaChain AI Service running"}
