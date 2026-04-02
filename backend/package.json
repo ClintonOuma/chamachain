@@ -8,6 +8,8 @@
     "flush": "node src/scripts/flushDb.js"
   },
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
+    "africastalking": "^0.7.9",
     "axios": "^1.14.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -21,8 +23,10 @@
     "mongodb": "^7.1.1",
     "mongoose": "^8.0.0",
     "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.4",
     "nodemon": "^3.0.0",
     "pdfkit": "^0.18.0",
-    "socket.io": "^4.7.0"
+    "socket.io": "^4.7.0",
+    "twilio": "^5.13.1"
   }
 }
