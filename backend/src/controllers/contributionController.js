@@ -3,6 +3,7 @@ const Contribution = require('../models/Contribution');
 const Membership = require('../models/Membership');
 const Chama = require('../models/Chama');
 const { checkAndAwardBadges } = require('../services/badgeService');
+const mpesaService = require('../services/mpesaService');
 
 const currentPeriodMonth = () => {
   const d = new Date();
@@ -37,37 +38,68 @@ const initiateContribution = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not a member of this chama' });
     }
 
-    const mpesaRef = `MPESA${Date.now()}`;
     const periodMonth = currentPeriodMonth();
 
-    const contribution = await Contribution.create({
-      userId: req.user.userId,
-      chamaId,
-      amount: numAmount,
-      mpesaRef,
-      mpesaPhone: mpesaPhone != null ? String(mpesaPhone) : '',
-      status: 'success',
-      periodMonth
-    });
-
-    await Membership.findByIdAndUpdate(membership._id, {
-      $inc: { totalContributed: numAmount }
-    });
-
-    await Chama.findByIdAndUpdate(chamaId, {
-      $inc: { totalBalance: numAmount }
-    });
-
-    const updatedMembership = await Membership.findOne({ userId: req.user.userId, chamaId })
-    const contribCount = await Contribution.countDocuments({ userId: req.user.userId, chamaId, status: 'success' })
-    await checkAndAwardBadges(req.user.userId, chamaId, {
-      contributionCount: contribCount,
-      streak: updatedMembership?.contributionStreak || 0,
-      loanRepaid: false
-    })
-
-    return res.status(201).json({ success: true, contribution });
+    const mpesaResponse = await mpesaService.stkPush(mpesaPhone, numAmount, chamaId);
+    
+    if (mpesaResponse.ResponseCode === '0') {
+      const contribution = await Contribution.create({
+        userId: req.user.userId,
+        chamaId,
+        amount: numAmount,
+        mpesaRef: mpesaResponse.CheckoutRequestID,
+        mpesaPhone: mpesaPhone != null ? String(mpesaPhone) : '',
+        status: 'pending',
+        periodMonth
+      });
+      return res.status(201).json({ success: true, contribution, mpesaResponse });
+    } else {
+      return res.status(400).json({ success: false, message: 'STK Push failed', mpesaResponse });
+    }
   } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+const mpesaCallback = async (req, res) => {
+  try {
+    const callbackData = mpesaService.processStkCallback(req.body);
+    const checkoutRequestId = req.body.Body.stkCallback.CheckoutRequestID;
+
+    const contribution = await Contribution.findOne({ mpesaRef: checkoutRequestId });
+    if (!contribution) {
+      return res.status(404).json({ success: false, message: 'Contribution not found' });
+    }
+
+    if (callbackData.success) {
+      contribution.status = 'success';
+      contribution.mpesaRef = callbackData.mpesaRef;
+      await contribution.save();
+
+      await Membership.findOneAndUpdate(
+        { userId: contribution.userId, chamaId: contribution.chamaId },
+        { $inc: { totalContributed: contribution.amount } }
+      );
+
+      await Chama.findByIdAndUpdate(contribution.chamaId, {
+        $inc: { totalBalance: contribution.amount }
+      });
+
+      const updatedMembership = await Membership.findOne({ userId: contribution.userId, chamaId: contribution.chamaId })
+      const contribCount = await Contribution.countDocuments({ userId: contribution.userId, chamaId: contribution.chamaId, status: 'success' })
+      await checkAndAwardBadges(contribution.userId, contribution.chamaId, {
+        contributionCount: contribCount,
+        streak: updatedMembership?.contributionStreak || 0,
+        loanRepaid: false
+      })
+    } else {
+      contribution.status = 'failed';
+      await contribution.save();
+    }
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('M-Pesa callback error:', err.message);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -178,6 +210,7 @@ const getContributionSummary = async (req, res) => {
 
 module.exports = {
   initiateContribution,
+  mpesaCallback,
   getContributions,
   getMyContributions,
   getContributionSummary

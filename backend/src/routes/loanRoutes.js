@@ -4,10 +4,11 @@ const { protect } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const {
   requestLoan, getLoans, getMyLoans,
-  approveLoan, rejectLoan, repayLoan
+  approveLoan, rejectLoan, repayLoan, mpesaRepayCallback
 } = require('../controllers/loanController');
 
 router.post('/request', protect, requestLoan);
+router.post('/mpesa/repay-callback', mpesaRepayCallback);
 router.get('/:chamaId', protect, requireRole('admin','treasurer'), getLoans);
 router.get('/:chamaId/my', protect, getMyLoans);
 router.patch('/:chamaId/loans/:loanId/approve', protect, requireRole('admin'), approveLoan);

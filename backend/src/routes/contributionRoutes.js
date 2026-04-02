@@ -3,6 +3,7 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const {
   initiateContribution,
+  mpesaCallback,
   getContributions,
   getMyContributions,
   getContributionSummary
@@ -10,6 +11,7 @@ const {
 const { contributionLimiter } = require('../middleware/rateLimiter');
 
 router.post('/initiate', protect, contributionLimiter, initiateContribution);
+router.post('/mpesa/callback', mpesaCallback);
 router.get('/:chamaId', protect, getContributions);
 router.get('/:chamaId/my', protect, getMyContributions);
 router.get('/:chamaId/summary', protect, getContributionSummary);
