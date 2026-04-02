@@ -42,14 +42,17 @@ function buildCorsOrigins() {
   return [...origins];
 }
 
-app.use(
-  cors({
-    origin: corsStrict ? buildCorsOrigins() : true,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors({ 
+  origin: [ 
+    'http://localhost:5173', 
+    'http://127.0.0.1:5173', 
+    'https://chamachain-nine.vercel.app', 
+    process.env.FRONTEND_URL 
+  ].filter(Boolean), 
+  credentials: true, 
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 
+  allowedHeaders: ['Content-Type', 'Authorization'] 
+})) 
 app.use(express.json());
 app.use('/api/', generalLimiter);
 

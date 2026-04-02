@@ -390,10 +390,12 @@ export default function DashboardPage() {
           marginLeft: '240px',
           flex: 1,
           padding: '32px',
+          paddingBottom: '100px', // Added space for mobile bottom nav
           position: 'relative',
           zIndex: 1,
           overflowY: 'auto',
           minHeight: '100vh',
+          boxSizing: 'border-box', // Ensure padding doesn't affect layout
         }}
       >
         {/* Header */}

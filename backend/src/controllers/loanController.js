@@ -22,6 +22,9 @@ const requestLoan = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Valid chamaId is required' });
     }
 
+    const chamaDoc = await Chama.findById(chamaId) 
+    if (chamaDoc?.status === 'frozen') return res.status(403).json({ success: false, message: 'This chama is frozen. Loan requests are not allowed.' }) 
+
     const numAmount = Number(amount);
     if (!Number.isFinite(numAmount) || numAmount <= 0) {
       return res.status(400).json({ success: false, message: 'amount must be a positive number' });

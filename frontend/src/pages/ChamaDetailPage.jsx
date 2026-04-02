@@ -713,7 +713,7 @@ export default function ChamaDetailPage() {
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0D0B1E', fontFamily: "'DM Sans',sans-serif" }}>
       <div className="mesh-bg" />
       <Sidebar />
-      <main className="main-content" style={{ marginLeft: '240px', flex: 1, padding: '32px', position: 'relative', zIndex: 1, overflowY: 'auto' }}>
+      <main className="main-content" style={{ marginLeft: '240px', flex: 1, padding: '32px', position: 'relative', zIndex: 1, overflowY: 'auto', minHeight: '100vh' }}>
 
         {/* Header */}
         <div style={{ marginBottom: 32 }}>

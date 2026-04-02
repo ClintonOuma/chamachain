@@ -135,7 +135,7 @@ import { useState, useEffect } from 'react'
      <div style={{ display: 'flex', minHeight: '100vh', background: '#0D0B1E' }}> 
        <div className="mesh-bg" /> 
        <Sidebar /> 
-       <main className="main-content" style={{ marginLeft: '240px', flex: 1, padding: '32px', position: 'relative', zIndex: 1 }}> 
+       <main className="main-content" style={{ marginLeft: '240px', flex: 1, padding: '32px', position: 'relative', zIndex: 1, overflowY: 'auto', minHeight: '100vh' }}> 
  
          {/* Header */} 
          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}> 
