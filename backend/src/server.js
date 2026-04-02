@@ -81,12 +81,8 @@ const reportRoutes = require('./routes/reportRoutes')
 app.use('/api/v1/reports', reportRoutes) 
 
 const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-  },
-});
+const socketService = require('./services/socketService');
+socketService.init(server);
 
 const mongoUri = process.env.MONGODB_URI.trim();
 
