@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom' 
 import useAuthStore from './store/authStore' 
 import LoadingScreen from './components/LoadingScreen' 
-import useSocket from './hooks/useSocket'
+// import useSocket from './hooks/useSocket' // Removed to prevent initialization issues
 
 import LandingPage from './pages/LandingPage' 
 import LoginPage from './pages/LoginPage' 
@@ -32,7 +32,7 @@ const PublicRoute = ({ children }) => {
 
 export default function App() { 
   const [appLoading, setAppLoading] = useState(true) 
-  useSocket()
+  // useSocket() // Removed to prevent initialization issues
   useEffect(() => { setTimeout(() => setAppLoading(false), 1200) }, []) 
   if (appLoading) return <LoadingScreen /> 
 
