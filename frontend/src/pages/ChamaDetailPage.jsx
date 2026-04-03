@@ -531,6 +531,18 @@ export default function ChamaDetailPage() {
   const [isFundAccountModalOpen, setIsFundAccountModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
 
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn('Loading timeout - forcing content to show')
+        setLoading(false)
+      }
+    }, 5000) // 5 second timeout
+
+    return () => clearTimeout(timer)
+  }, [loading])
+
   const membership = members?.find(m => m.userId?._id === user?.id)
 
   const TABS = [
@@ -598,12 +610,12 @@ export default function ChamaDetailPage() {
 
   // Combined loading state
   useEffect(() => {
-    if (!roleLoading && chama && members.length > 0 && contributions.length > 0 && loans.length > 0) {
+    if (!roleLoading && chama) {
       setLoading(false)
     } else if (error) {
       setLoading(false) // If there's an error, stop loading too.
     }
-  }, [roleLoading, chama, members, contributions, loans, error])
+  }, [roleLoading, chama, error])
 
 
 
