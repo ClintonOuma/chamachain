@@ -518,9 +518,8 @@ export default function ChamaDetailPage() {
   const { chamaId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  usePageTitle(chama?.name ? `ChamaChain - ${chama.name}` : 'ChamaChain')
-
   const [chama, setChama] = useState(null)
+  usePageTitle(chama?.name ? `ChamaChain - ${chama.name}` : 'ChamaChain')
   const [members, setMembers] = useState([])
   const [contributions, setContributions] = useState([])
   const [loans, setLoans] = useState([])
