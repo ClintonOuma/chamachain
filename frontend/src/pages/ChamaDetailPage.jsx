@@ -531,6 +531,8 @@ export default function ChamaDetailPage() {
   const [isFundAccountModalOpen, setIsFundAccountModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
 
+  const membership = members.find(m => m.userId?._id === user?.id)
+
   const TABS = [
     { name: 'Overview', icon: LayoutDashboard, component: OverviewTab, props: { chama, members, chamaId } },
     { name: 'Members', icon: Users, component: MembersTab, props: { members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan } },
@@ -538,8 +540,6 @@ export default function ChamaDetailPage() {
     { name: 'Loans', icon: CreditCard, component: LoansTab, props: { loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances } },
     { name: 'Settings', icon: Settings, component: SettingsTab, props: { chama, chamaId, isAdmin, members } },
   ];
-
-  const membership = members.find(m => m.userId?._id === user?.id)
 
   useEffect(() => {
     const fetchChamaDetails = async () => {
