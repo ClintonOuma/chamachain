@@ -429,7 +429,7 @@ function SettingsTab({ chama, chamaId, isAdmin, members }) {
 
   const handleTransferAdmin = async () => {
     if (!transferAdminUserId) return alert('Please select a member to transfer admin rights to.')
-    if (window.confirm(`Are you sure you want to transfer admin rights to ${members.find(m => m.userId?._id === transferAdminUserId)?.userId?.fullName}? This action cannot be undone.`)) {
+    if (window.confirm(`Are you sure you want to transfer admin rights to ${members?.find(m => m.userId?._id === transferAdminUserId)?.userId?.fullName}? This action cannot be undone.`)) {
       setModalLoading(true)
       try {
         await api.patch(`/chamas/${chamaId}/transfer-admin/${transferAdminUserId}`)
@@ -531,7 +531,7 @@ export default function ChamaDetailPage() {
   const [isFundAccountModalOpen, setIsFundAccountModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
 
-  const membership = members.find(m => m.userId?._id === user?.id)
+  const membership = members?.find(m => m.userId?._id === user?.id)
 
   const TABS = [
     { name: 'Overview', icon: LayoutDashboard, component: OverviewTab, props: { chama, members, chamaId } },
@@ -560,27 +560,31 @@ export default function ChamaDetailPage() {
     const fetchMemberships = async () => {
       try {
         const res = await api.get(`/chamas/${chamaId}/members`)
-        setMembers(res.data.memberships)
+        setMembers(res.data.memberships || [])
       } catch (err) {
         console.error('Memberships fetch error:', err)
+        setMembers([])
       }
     }
     const fetchContributions = async () => {
       try {
         const res = await api.get(`/chamas/${chamaId}/contributions`)
-        setContributions(res.data.contributions)
+        setContributions(res.data.contributions || [])
       } catch (err) {
         console.error('Contributions fetch error:', err)
+        setContributions([])
       }
     }
     const fetchLoans = async () => {
       try {
         const res = await api.get(`/loans/${chamaId}`)
-        setLoans(res.data.loans)
+        setLoans(res.data.loans || [])
         const myLoansRes = await api.get(`/loans/${chamaId}/my`)
-        setMyLoans(myLoansRes.data.loans)
+        setMyLoans(myLoansRes.data.loans || [])
       } catch (err) {
         console.error('Loans fetch error:', err)
+        setLoans([])
+        setMyLoans([])
       }
     }
 
