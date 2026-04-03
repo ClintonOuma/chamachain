@@ -8,7 +8,7 @@ const init = (server) => {
       origin: [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
-        'https://chamachain-nine.vercel.app',
+        /^https:\/\/.*\.vercel\.app$/,  // Allow all Vercel subdomains
       ],
       methods: ['GET', 'POST'],
       credentials: true

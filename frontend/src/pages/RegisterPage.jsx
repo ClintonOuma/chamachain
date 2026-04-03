@@ -180,7 +180,7 @@ function FloatingPhoneInput({ value, onChange, onBlur, error }) {
           type="tel"
           value={value}
           onChange={(e) => {
-            const val = e.target.value.replace(/\D/g, '').slice(0, 8)
+            const val = e.target.value.replace(/\D/g, '').slice(0, 9)
             onChange(val)
           }}
           onFocus={() => setFocused(true)}
@@ -188,7 +188,7 @@ function FloatingPhoneInput({ value, onChange, onBlur, error }) {
             setFocused(false)
             if (onBlur) onBlur(e)
           }}
-          placeholder={active ? '7XX XXX XX' : ''}
+          placeholder={active ? '7XX XXX XXX' : ''}
           style={{
             flex: 1,
             background: 'transparent',
@@ -263,8 +263,8 @@ export default function RegisterPage() {
   }
 
   const validatePhone = (val) => {
-    if (val.length > 0 && !/^\d{8}$/.test(val)) {
-      setPhoneError('Please enter 8 digits')
+    if (val.length > 0 && !/^\d{9}$/.test(val)) {
+      setPhoneError('Please enter 9 digits')
       return false
     }
     setPhoneError('')

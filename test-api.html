@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testRegister()">Test Register</button>
+    <div id="result"></div>
+
+    <script>
+        const API_URL = 'https://chamachain-backend.onrender.com/api/v1';
+        
+        async function testLogin() {
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: 'testuser2@example.com',
+                    password: 'password123'
+                })
+            });
+            const data = await response.json();
+            document.getElementById('result').innerHTML = `
+                <h3>Login Response:</h3>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+                <p>Status: ${response.status}</p>
+            `;
+        }
+        
+        async function testRegister() {
+            const response = await fetch(`${API_URL}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fullName: 'Test User',
+                    email: 'test' + Math.random() + '@test.com',
+                    phone: '+254712345678',
+                    password: 'password123'
+                })
+            });
+            const data = await response.json();
+            document.getElementById('result').innerHTML = `
+                <h3>Register Response:</h3>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+                <p>Status: ${response.status}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
