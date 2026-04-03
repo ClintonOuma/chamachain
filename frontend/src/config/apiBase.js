@@ -21,7 +21,8 @@ export function getApiOrigin() {
     if (devOverride) return devOverride
     return ''
   }
-  return ''
+  // Fallback for production when env var is not set
+  return 'https://chamachain-backend.onrender.com'
 }
 
 export function getApiBaseURL() {
