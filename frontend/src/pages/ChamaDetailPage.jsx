@@ -11,6 +11,7 @@ import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
 import usePageTitle from '../hooks/usePageTitle'
+import useMyRole from '../hooks/useMyRole'
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ const BTN_PRIMARY = {
 }
 
 const ROLE_COLOR = { Admin: '#F59E0B', Treasurer: '#0EA5E9', Member: '#8B5CF6', Observer: '#64748B' }
+const BADGE_ROLE_COLOR_MAP = { admin: 'gold', treasurer: 'blue', member: 'purple', observer: 'gray' }
 
 function avatarBg(name = '') {
   const colors = ['#0EA5E9','#8B5CF6','#10B981','#F59E0B','#EF4444','#EC4899']
@@ -196,7 +198,7 @@ function OverviewTab({ chama, members, chamaId }) {
             return (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < leaderboard.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
                 <span style={{ fontSize: '20px', width: '28px' }}>{medals[i] || `#${i + 1}`}</span>
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne', fontWeight: 700, color: 'white', fontSize: '13px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne', fontWeight: 700, color: 'white' }}>
                   {initials}
                 </div>
                 <div style={{ flex: 1 }}>
@@ -212,7 +214,7 @@ function OverviewTab({ chama, members, chamaId }) {
   )
 }
 
-function MembersTab({ members, membership, chamaId, user }) {
+function MembersTab({ members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan }) {
   const [query, setQuery] = useState('')
   const filtered = members.filter(m => (m.userId?.fullName || '').toLowerCase().includes(query.toLowerCase()))
 
@@ -227,7 +229,7 @@ function MembersTab({ members, membership, chamaId, user }) {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
         {filtered.map((member, i) => {
-          const isAdmin = membership?.role === 'admin'
+          const memberIsAdmin = member.role === 'admin'
           const roleColors = { admin: '#F59E0B', treasurer: '#0EA5E9', member: '#64748B', observer: '#475569' }
           const initials = member.userId?.fullName?.split(' ').map(n => n[0]).join('').slice(0,2) || 'U'
           return (
@@ -244,8 +246,7 @@ function MembersTab({ members, membership, chamaId, user }) {
               <p style={{ margin: 0, color: '#10B981', fontFamily: 'DM Sans', fontSize: '13px' }}>
                 KES {(member.totalContributed || 0).toLocaleString()} contributed
               </p>
-              {member.contributionStreak >= 3 && <span>🔥 {member.contributionStreak} month streak</span>}
-              {isAdmin && member.userId?._id !== user?.id && (
+              {canManage && member.userId?._id !== user?.id && (
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <select
                     defaultValue={member.role}
@@ -280,7 +281,7 @@ function MembersTab({ members, membership, chamaId, user }) {
   )
 }
 
-function ContributionsTab({ contributions, chamaId, onContribute }) {
+function ContributionsTab({ contributions, chamaId, onContribute, canContribute, canViewFinances }) {
   const totalMonth = contributions.filter(c => {
     const d = new Date(c.createdAt)
     const now = new Date()
@@ -296,578 +297,416 @@ function ContributionsTab({ contributions, chamaId, onContribute }) {
           <div style={{ color: '#94A3B8', fontSize: 13, marginBottom: 4 }}>Contributed this month</div>
           <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 28, fontWeight: 700, color: '#0EA5E9' }}>KES {totalMonth.toLocaleString()}</div>
         </div>
-        <button onClick={onContribute} style={BTN_PRIMARY}><Plus size={16} />Contribute</button>
+        {canContribute && <button onClick={onContribute} style={BTN_PRIMARY}><Plus size={16} />Contribute</button>}
       </div>
-      <div style={CARD}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              {['Member', 'Amount', 'M-Pesa Ref', 'Date', 'Status'].map(h => (
-                <th key={h} style={{ padding: '12px', textAlign: 'left', fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B', textTransform: 'uppercase' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {contributions.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', color: '#64748B', padding: 48 }}>No contributions yet</td></tr>
-            ) : contributions.map((c, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
-                <td style={{ padding: '12px', fontFamily: 'DM Sans', color: '#F8FAFC' }}>{c.userId?.fullName || 'Unknown'}</td>
-                <td style={{ padding: '12px', fontFamily: 'Syne', color: '#10B981', fontWeight: 600 }}>KES {c.amount?.toLocaleString()}</td>
-                <td style={{ padding: '12px', fontFamily: 'DM Mono', color: '#64748B', fontSize: '12px' }}>{c.mpesaRef}</td>
-                <td style={{ padding: '12px', fontFamily: 'DM Sans', color: '#94A3B8', fontSize: '13px' }}>{new Date(c.createdAt).toLocaleDateString()}</td>
-                <td style={{ padding: '12px' }}>
-                  <span style={{ background: c.status === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)', color: c.status === 'success' ? '#10B981' : '#F59E0B', padding: '3px 10px', borderRadius: '10px', fontSize: '12px', fontFamily: 'DM Sans' }}>
-                    {c.status}
-                  </span>
-                </td>
+      {canViewFinances ? (
+        <div style={CARD}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                {['Member', 'Amount', 'M-Pesa Ref', 'Date', 'Status'].map(h => (
+                  <th key={h} style={{ padding: '12px', textAlign: 'left', fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B', textTransform: 'uppercase' }}>{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {contributions.length === 0 ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', color: '#64748B', padding: 48 }}>No contributions yet</td></tr>
+              ) : contributions.map((c, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                  <td style={{ padding: '12px', fontFamily: 'DM Sans', color: '#F8FAFC' }}>{c.userId?.fullName || 'Unknown'}</td>
+                  <td style={{ padding: '12px', fontFamily: 'Syne', color: '#10B981', fontWeight: 600 }}>KES {c.amount?.toLocaleString()}</td>
+                  <td style={{ padding: '12px', fontFamily: 'DM Mono', color: '#64748B', fontSize: '12px' }}>{c.mpesaRef}</td>
+                  <td style={{ padding: '12px', fontFamily: 'DM Sans', color: '#94A3B8', fontSize: '13px' }}>{new Date(c.createdAt).toLocaleDateString()}</td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{ background: c.status === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)', color: c.status === 'success' ? '#10B981' : '#F59E0B', padding: '3px 10px', borderRadius: '10px', fontSize: '12px', fontFamily: 'DM Sans' }}>
+                      {c.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div style={{ ...CARD, textAlign: 'center', padding: 48, color: '#64748B' }}>
+          <Wallet size={48} style={{ opacity: 0.5, marginBottom: 16 }} />
+          <p>You do not have permission to view financial records.</p>
+        </div>
+      )}
     </div>
   )
 }
 
-function LoansTab({ loans, myLoans, membership, chamaId }) {
-  const displayLoans = membership?.role === 'admin' || membership?.role === 'treasurer' ? loans : myLoans
+function LoansTab({ loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances }) {
+  const displayLoans = canViewFinances ? loans : myLoans
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-        <button style={BTN_PRIMARY}><Plus size={16} />Request Loan</button>
+        {canRequestLoan && <button style={BTN_PRIMARY}><Plus size={16} />Request Loan</button>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {displayLoans.length === 0 ? (
           <div style={{ ...CARD, textAlign: 'center', padding: 48 }}>
             <CreditCard size={48} style={{ color: '#0EA5E9', marginBottom: 16, opacity: 0.5 }} />
-            <div style={{ color: '#FFF', fontFamily: "'Syne',sans-serif", marginBottom: 8 }}>No loans yet</div>
-            <div style={{ color: '#64748B', fontSize: 14 }}>Request a loan to get started</div>
+            <p style={{ color: '#64748B' }}>No loans to display.</p>
           </div>
-        ) : displayLoans.map((loan, i) => {
-          const totalRepaid = loan.repayments?.reduce((s, r) => s + r.amount, 0) || 0
-          const progress = Math.min((totalRepaid / loan.totalRepayable) * 100, 100)
-          const isAdmin = membership?.role === 'admin'
-          return (
-            <div key={i} className="glass-card" style={{ padding: '20px', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <div>
-                  <p style={{ margin: 0, fontFamily: 'Syne', color: '#F8FAFC', fontWeight: 600 }}>KES {loan.amount?.toLocaleString()}</p>
-                  <p style={{ margin: '4px 0 0', fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8' }}>{loan.purpose} · {loan.repaymentMonths} months</p>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ background: loan.riskLabel === 'low' ? 'rgba(16,185,129,0.15)' : loan.riskLabel === 'medium' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)', color: loan.riskLabel === 'low' ? '#10B981' : loan.riskLabel === 'medium' ? '#F59E0B' : '#EF4444', padding: '3px 10px', borderRadius: '10px', fontSize: '12px' }}>
-                    {loan.riskLabel} risk
-                  </span>
-                  <span style={{ background: 'rgba(14,165,233,0.15)', color: '#0EA5E9', padding: '3px 10px', borderRadius: '10px', fontSize: '12px' }}>
-                    {loan.status}
-                  </span>
-                </div>
+        ) : displayLoans.map((loan, i) => (
+          <div key={loan._id} className="glass-card" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div>
+                <p style={{ margin: 0, fontFamily: 'Syne', color: '#F8FAFC', fontWeight: 600 }}>Loan to {loan.userId?.fullName || 'N/A'}</p>
+                <span style={{ fontSize: '12px', color: '#94A3B8' }}>{new Date(loan.createdAt).toLocaleDateString()}</span>
               </div>
-              {loan.status === 'disbursed' && (
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '12px', color: '#64748B', fontFamily: 'DM Sans' }}>Repayment Progress</span>
-                    <span style={{ fontSize: '12px', color: '#0EA5E9', fontFamily: 'DM Sans' }}>KES {totalRepaid.toLocaleString()} / {loan.totalRepayable?.toLocaleString()}</span>
-                  </div>
-                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.1)' }}>
-                    <div style={{ height: '100%', borderRadius: '3px', background: '#0EA5E9', width: `${progress}%`, transition: 'width 0.5s ease' }} />
-                  </div>
-                </div>
-              )}
-              {isAdmin && loan.status === 'pending' && (
+              <span style={{
+                background: loan.status === 'approved' ? 'rgba(16,185,129,0.15)' : loan.status === 'pending' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)',
+                color: loan.status === 'approved' ? '#10B981' : loan.status === 'pending' ? '#F59E0B' : '#EF4444',
+                padding: '4px 10px',
+                borderRadius: '10px',
+                fontSize: '12px',
+                fontFamily: 'DM Sans',
+                fontWeight: 600
+              }}>{loan.status}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ margin: 0, fontFamily: 'Syne', color: '#0EA5E9', fontWeight: 700 }}>KES {loan.amount.toLocaleString()}</p>
+              {canApproveLoan && loan.status === 'pending' && (
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     onClick={async () => {
-                      await api.patch(`/loans/${chamaId}/loans/${loan._id}/approve`)
-                      window.location.reload()
+                      if (window.confirm('Approve this loan?')) {
+                        await api.patch(`/loans/${loan._id}/approve`)
+                        window.location.reload()
+                      }
                     }}
-                    style={{ flex: 1, padding: '8px', borderRadius: '8px', background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)', cursor: 'pointer', fontFamily: 'DM Sans' }}
-                  >✓ Approve</button>
+                    style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer' }}
+                  >Approve</button>
                   <button
                     onClick={async () => {
-                      await api.patch(`/loans/${chamaId}/loans/${loan._id}/reject`)
-                      window.location.reload()
+                      if (window.confirm('Reject this loan?')) {
+                        await api.patch(`/loans/${loan._id}/reject`)
+                        window.location.reload()
+                      }
                     }}
-                    style={{ flex: 1, padding: '8px', borderRadius: '8px', background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer', fontFamily: 'DM Sans' }}
-                  >✗ Reject</button>
+                    style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer' }}
+                  >Reject</button>
                 </div>
               )}
             </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function VotesTab({ votes, userId }) {
-  const fakeHash = () => '0x' + Math.random().toString(16).slice(2, 18)
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {votes.length === 0 ? (
-        <div style={{ ...CARD, textAlign: 'center', padding: 64 }}>
-          <div style={{ fontSize: 64, marginBottom: 16 }}>🗳️</div>
-          <div style={{ fontFamily: "'Syne',sans-serif", color: '#FFF', fontSize: 20, marginBottom: 8 }}>No Active Votes</div>
-          <div style={{ color: '#64748B' }}>Loan vote requests will appear here</div>
-        </div>
-      ) : votes.map((v, i) => {
-        const yesCount = v.votes?.filter(x => x.vote === 'yes').length || 0
-        const noCount = v.votes?.filter(x => x.vote === 'no').length || 0
-        const total = yesCount + noCount || 1
-        const yesPct = Math.round(yesCount / total * 100)
-        const hasVoted = v.votes?.some(x => String(x.userId) === String(userId))
-        const isDone = v.status !== 'pending'
-        return (
-          <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} style={CARD}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-              <div>
-                <div style={{ fontFamily: "'Syne',sans-serif", color: '#FFF', fontWeight: 700, fontSize: 18, marginBottom: 6 }}>{v.userId?.fullName || 'Member'} — KES {(v.amount || 0).toLocaleString()}</div>
-                <div style={{ display: 'flex', gap: 8 }}><Badge label={v.purpose || 'General'} color="purple" /><Badge label={isDone ? (v.status === 'approved' ? 'Approved ✓' : 'Rejected ✗') : 'Voting open'} color={isDone ? (v.status === 'approved' ? 'green' : 'red') : 'blue'} /></div>
-              </div>
-              {isDone && <span style={{ color: '#475569', fontSize: 11, fontFamily: 'monospace' }}>{fakeHash()}</span>}
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 13, marginBottom: 8 }}>
-                <span>✓ Yes — {yesPct}%</span><span>✗ No — {100 - yesPct}%</span>
-              </div>
-              <div style={{ height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${yesPct}%`, background: 'linear-gradient(90deg,#10B981,#0EA5E9)', borderRadius: 4 }} />
-              </div>
-            </div>
-            {!hasVoted && !isDone && (
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button style={{ ...BTN_PRIMARY, background: '#10B981', flex: 1, justifyContent: 'center' }}>Vote Yes ✓</button>
-                <button style={{ ...BTN_PRIMARY, background: '#EF4444', flex: 1, justifyContent: 'center' }}>Vote No ✗</button>
-              </div>
-            )}
-          </motion.div>
-        )
-      })}
-    </div>
-  )
-}
-
-function ReportsTab({ chamaId }) {
-  const handleExportCSV = () => { 
-    const token = localStorage.getItem('accessToken') 
-    const baseURL = import.meta.env.VITE_API_URL || '' 
-    window.open(`${baseURL}/api/v1/reports/${chamaId}/csv?token=${token}`, '_blank') 
-  } 
-
-  const handleExportPDF = () => { 
-    const token = localStorage.getItem('accessToken') 
-    const baseURL = import.meta.env.VITE_API_URL || '' 
-    window.open(`${baseURL}/api/v1/reports/${chamaId}/pdf?token=${token}`, '_blank') 
-  }
-
-  return (
-    <div>
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', justifyContent: 'flex-end' }}> 
-        <button className="btn-ghost" onClick={handleExportCSV} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
-          📊 Export CSV 
-        </button> 
-        <button className="btn-ghost" onClick={handleExportPDF} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
-          📄 Export PDF 
-        </button> 
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 20, marginBottom: 32 }}>
-        {[
-          { label: 'Total In', val: 'KES 125,000', color: '#10B981' },
-          { label: 'Total Out', val: 'KES 48,000', color: '#EF4444' },
-          { label: 'Net Balance', val: 'KES 77,000', color: '#0EA5E9' },
-          { label: 'Loan Book', val: 'KES 48,000', color: '#F59E0B' },
-        ].map((s, i) => (
-          <div key={i} style={CARD}>
-            <div style={{ color: '#94A3B8', fontSize: 13, marginBottom: 12 }}>{s.label}</div>
-            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 22, fontWeight: 700, color: s.color }}>{s.val}</div>
           </div>
         ))}
       </div>
-      <div style={CARD}>
-        <h3 style={{ fontFamily: "'Syne',sans-serif", color: '#FFF', margin: '0 0 24px 0', fontSize: 18 }}>Monthly Contributions</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={MONTHLY_CONTRIBS}>
-            <XAxis dataKey="month" stroke="#475569" tick={{ fill: '#94A3B8', fontSize: 12 }} />
-            <YAxis stroke="#475569" tick={{ fill: '#94A3B8', fontSize: 12 }} tickFormatter={v => `${v/1000}k`} />
-            <Tooltip contentStyle={{ background: '#1a1625', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#FFF' }} formatter={v => [`KES ${v.toLocaleString()}`, 'Contributions']} />
-            <Bar dataKey="amount" fill="#0EA5E9" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
     </div>
   )
 }
 
-// ─── Modals ───────────────────────────────────────────────────────────────────
+function SettingsTab({ chama, chamaId, isAdmin, members }) {
+  const [inviteCode, setInviteCode] = useState('')
+  const [modalLoading, setModalLoading] = useState(false)
+  const [transferAdminUserId, setTransferAdminUserId] = useState('')
+  const navigate = useNavigate()
 
-function ContributeModal({ onClose, chamaId, user }) {
-  const [amount, setAmount] = useState('')
-  const [phone, setPhone] = useState(user?.phone?.replace('+254', '') || '')
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  useEffect(() => {
+    if (isAdmin) {
+      api.get(`/chamas/${chamaId}/invite-code`)
+        .then(res => setInviteCode(res.data.inviteCode))
+        .catch(err => console.error('Error fetching invite code:', err))
+    }
+  }, [chamaId, isAdmin])
 
-  const handleSubmit = async () => {
-    if (!amount || !phone) return
-    setLoading(true)
-    try {
-      await api.post('/contributions/initiate', { chamaId, amount: Number(amount), mpesaPhone: '+254' + phone })
-      setSuccess(true)
-      setTimeout(onClose, 3000)
-    } catch (err) {
-      alert(err.response?.data?.message || 'Error initiating contribution')
-    } finally {
-      setLoading(false)
+  const handleLeaveChama = async () => {
+    if (window.confirm('Are you sure you want to leave this Chama?')) {
+      try {
+        await api.patch(`/chamas/${chamaId}/leave`)
+        navigate('/chamas')
+      } catch (err) {
+        console.error('Error leaving chama:', err)
+        alert('Failed to leave chama.')
+      }
+    }
+  }
+
+  const handleTransferAdmin = async () => {
+    if (!transferAdminUserId) return alert('Please select a member to transfer admin rights to.')
+    if (window.confirm(`Are you sure you want to transfer admin rights to ${members.find(m => m.userId?._id === transferAdminUserId)?.userId?.fullName}? This action cannot be undone.`)) {
+      setModalLoading(true)
+      try {
+        await api.patch(`/chamas/${chamaId}/transfer-admin/${transferAdminUserId}`)
+        alert('Admin rights transferred successfully. You will now be redirected.')
+        navigate('/chamas')
+      } catch (err) {
+        console.error('Error transferring admin:', err)
+        alert(err.response?.data?.message || 'Failed to transfer admin rights.')
+      } finally {
+        setModalLoading(false)
+      }
     }
   }
 
   return (
-    <ModalWrap onClose={onClose} title="💸 Contribute to Chama">
-      {success ? (
-        <div style={{ textAlign: 'center', padding: '32px 0' }}>
-          <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
-          <div style={{ fontFamily: "'Syne',sans-serif", color: '#10B981', fontSize: 20, fontWeight: 700 }}>KES {Number(amount).toLocaleString()} contributed!</div>
-          <div style={{ color: '#94A3B8', marginTop: 8 }}>Check your phone to complete M-Pesa payment.</div>
-        </div>
-      ) : (
-        <>
-          <FloatingInput label="Amount (KES)" type="number" value={amount} onChange={e => setAmount(e.target.value)} />
-          <FloatingInput label="M-Pesa Phone (e.g. 0712345678)" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,'').slice(0,9))} />
-          <button onClick={handleSubmit} disabled={loading} style={{ ...BTN_PRIMARY, width: '100%', justifyContent: 'center', height: 52, marginTop: 8 }}>
-            {loading ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : 'Contribute Now'}
-          </button>
-        </>
-      )}
-    </ModalWrap>
-  )
-}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+      {isAdmin && (
+        <div className="glass-card" style={{ padding: '24px' }}>
+          <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', margin: '0 0 16px' }}>Admin Settings</h3>
+          <p style={{ color: '#94A3B8', fontSize: '14px', marginBottom: '16px' }}>Manage administrative tasks for this Chama.</p>
 
-function ModalWrap({ onClose, title, children }) {
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(13,11,30,0.8)', backdropFilter: 'blur(8px)' }} />
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={{ position: 'relative', width: 420, maxWidth: '90%', background: '#12101f', borderRadius: 24, padding: 36, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 24px 48px rgba(0,0,0,0.5)' }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}><X size={20} /></button>
-        <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: 22, color: '#FFF', margin: '0 0 28px 0', fontWeight: 700 }}>{title}</h2>
-        {children}
-      </motion.div>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', color: '#64748B', fontSize: '13px', marginBottom: '8px' }}>Invite Code</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                value={inviteCode}
+                readOnly
+                style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#F8FAFC', fontSize: '14px', outline: 'none' }}
+              />
+              <button
+                onClick={() => navigator.clipboard.writeText(inviteCode)}
+                style={{ background: 'rgba(14,165,233,0.15)', color: '#0EA5E9', border: '1px solid rgba(14,165,233,0.3)', padding: '10px 14px', borderRadius: '8px', cursor: 'pointer' }}
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', color: '#64748B', fontSize: '13px', marginBottom: '8px' }}>Transfer Admin Rights</label>
+            <select
+              value={transferAdminUserId}
+              onChange={(e) => setTransferAdminUserId(e.target.value)}
+              style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#F8FAFC', fontSize: '14px', outline: 'none', marginBottom: '12px' }}
+            >
+              <option value="">Select a member</option>
+              {members.filter(m => m.role !== 'admin').map(member => (
+                <option key={member.userId?._id} value={member.userId?._id}>{member.userId?.fullName}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleTransferAdmin}
+              disabled={modalLoading || !transferAdminUserId}
+              style={{ ...BTN_PRIMARY, background: modalLoading ? '#64748B' : '#EF4444', boxShadow: modalLoading ? 'none' : '0 0 20px rgba(239,68,68,0.3)', width: '100%', padding: '10px 14px' }}
+            >
+              {modalLoading ? 'Transferring...' : 'Transfer Admin'}
+            </button>
+          </div>
+
+          <button
+            onClick={() => alert('Delete Chama functionality coming soon!')}
+            style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', width: '100%' }}
+          >
+            Delete Chama
+          </button>
+        </div>
+      )}
+
+      <div className="glass-card" style={{ padding: '24px' }}>
+        <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', margin: '0 0 16px' }}>General Settings</h3>
+        <p style={{ color: '#94A3B8', fontSize: '14px', marginBottom: '16px' }}>Update your personal settings for this Chama.</p>
+        <button
+          onClick={handleLeaveChama}
+          style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', width: '100%' }}
+        >
+          Leave Chama
+        </button>
+      </div>
     </div>
   )
 }
 
-const TABS = ['Overview', 'Members', 'Contributions', 'Loans', 'Votes', 'Reports']
-
-function AuditLogSection({ chamaId, membership }) { 
-  const [logs, setLogs] = useState([]) 
-  const [loading, setLoading] = useState(true) 
-
-  useEffect(() => { 
-    if (membership?.role !== 'admin' && membership?.role !== 'treasurer') return 
-    api.get(`/chamas/${chamaId}/audit`) 
-      .then(res => setLogs(res.data.logs || [])) 
-      .catch(() => {}) 
-      .finally(() => setLoading(false)) 
-  }, [chamaId, membership]) 
-
-  const actionLabels = { 
-    LOAN_REQUESTED: { label: 'Loan Requested', color: '#8B5CF6' }, 
-    LOAN_APPROVED: { label: 'Loan Approved', color: '#10B981' }, 
-    LOAN_REJECTED: { label: 'Loan Rejected', color: '#EF4444' }, 
-    LOAN_REPAYMENT: { label: 'Loan Repayment', color: '#0EA5E9' }, 
-    MEMBER_REMOVED: { label: 'Member Removed', color: '#F59E0B' }, 
-    ROLE_CHANGED: { label: 'Role Changed', color: '#0EA5E9' }, 
-    CHAMA_FROZEN: { label: 'Chama Frozen', color: '#F59E0B' }, 
-    CHAMA_UNFROZEN: { label: 'Chama Unfrozen', color: '#10B981' }, 
-  } 
-
-  return ( 
-    <div className="glass-card" style={{ padding: '28px', marginTop: '24px' }}> 
-      <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '20px' }}>📋 Audit Log</h3> 
-      {loading ? ( 
-        <p style={{ color: '#64748B', fontFamily: 'DM Sans' }}>Loading...</p> 
-      ) : logs.length === 0 ? ( 
-        <p style={{ color: '#64748B', fontFamily: 'DM Sans' }}>No audit logs yet</p> 
-      ) : ( 
-        logs.map((log, i) => { 
-          const action = actionLabels[log.action?.toUpperCase()] || { label: log.action, color: '#64748B' } 
-          return ( 
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < logs.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}> 
-              <span style={{ background: `${action.color}22`, color: action.color, padding: '3px 10px', borderRadius: '10px', fontSize: '12px', fontFamily: 'DM Sans', flexShrink: 0 }}>{action.label}</span> 
-              <div style={{ flex: 1 }}> 
-                <span style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8' }}>by </span> 
-                <span style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#F8FAFC', fontWeight: 600 }}>{log.performedBy?.fullName}</span> 
-                {log.targetUserId && <span style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8' }}> → {log.targetUserId?.fullName}</span>} 
-              </div> 
-              <span style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#475569', flexShrink: 0 }}>{new Date(log.createdAt).toLocaleDateString()}</span> 
-            </div> 
-          ) 
-        }) 
-      )} 
-    </div> 
-  ) 
-}
 
 export default function ChamaDetailPage() {
   const { chamaId } = useParams()
+  const navigate = useNavigate()
   const { user } = useAuthStore()
-  usePageTitle('Chama Details')
+  usePageTitle(chama?.name ? `ChamaChain - ${chama.name}` : 'ChamaChain')
+
   const [chama, setChama] = useState(null)
   const [members, setMembers] = useState([])
   const [contributions, setContributions] = useState([])
   const [loans, setLoans] = useState([])
-  const [myLoans, setMyLoans] = useState([])
-  const [membership, setMembership] = useState(null)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [myLoans, setMyLoans] = useState([]) // For non-admin/treasurer to see only their loans
   const [loading, setLoading] = useState(true)
-  const [showContribute, setShowContribute] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const { role, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan, loading: roleLoading } = useMyRole(chamaId)
+  const [error, setError] = useState(null)
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
+  const [isFundAccountModalOpen, setIsFundAccountModalOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState(0)
 
-  const [settings, setSettings] = useState({ 
-    minContribution: 500, 
-    contributionFrequency: 'monthly', 
-    contributionDueDay: 1, 
-    loanVoteThreshold: 51, 
-    maxLoanMultiplier: 3, 
-    latePenaltyRate: 0.5 
-  }) 
-
-  const handleSaveSettings = async () => { 
-    try { 
-      await api.patch(`/chamas/${chamaId}`, { settings }) 
-      alert('Settings saved successfully!') 
-    } catch (err) { 
-      alert(err.response?.data?.message || 'Failed to save settings') 
-    } 
-  } 
-
-  const handleFreezeChama = async () => { 
-    if (!window.confirm(`Are you sure you want to ${chama?.status === 'frozen' ? 'unfreeze' : 'freeze'} this chama?`)) return 
-    try { 
-      const res = await api.patch(`/chamas/${chamaId}/freeze`) 
-      alert(res.data.message) 
-      window.location.reload() 
-    } catch (err) { 
-      alert(err.response?.data?.message || 'Failed to update chama status') 
-    } 
-  } 
-
-  const handleCopyInvite = () => {
-    const link = `${window.location.origin}/join/${chama?.inviteCode}`
-    navigator.clipboard.writeText(link)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  const membership = members.find(m => m.userId?._id === user?.id)
 
   useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true)
+    const fetchChamaDetails = async () => {
+      setLoading(true) // Keep this for overall chama data loading
       try {
-        const [chamaRes, membersRes, contribRes] = await Promise.all([
-          api.get(`/chamas/${chamaId}`),
-          api.get(`/chamas/${chamaId}/members`),
-          api.get(`/contributions/${chamaId}`)
-        ])
-        setChama(chamaRes.data.chama)
-        if (chamaRes.data.chama?.settings) {
-          setSettings({
-            minContribution: chamaRes.data.chama.settings.minContribution || 500,
-            contributionFrequency: chamaRes.data.chama.settings.contributionFrequency || 'monthly',
-            contributionDueDay: chamaRes.data.chama.settings.contributionDueDay || 1,
-            loanVoteThreshold: chamaRes.data.chama.settings.loanVoteThreshold || 51,
-            maxLoanMultiplier: chamaRes.data.chama.settings.maxLoanMultiplier || 3,
-            latePenaltyRate: chamaRes.data.chama.settings.latePenaltyRate || 0.5
-          })
-        }
-        setMembers(membersRes.data.members || [])
-        setContributions(contribRes.data.contributions || [])
-
-        // Find current user membership
-        const myMembership = membersRes.data.members?.find(
-          m => m.userId?._id === user?.id || m.userId?._id === user?._id
-        )
-        setMembership(myMembership)
-
-        // Fetch loans based on role
-        try {
-          if (myMembership?.role === 'admin' || myMembership?.role === 'treasurer') {
-            const loansRes = await api.get(`/loans/${chamaId}`)
-            setLoans(loansRes.data.loans || [])
-          } else {
-            const myLoansRes = await api.get(`/loans/${chamaId}/my`)
-            setMyLoans(myLoansRes.data.loans || [])
-          }
-        } catch (e) { console.error('Loans fetch:', e) }
+        const res = await api.get(`/chamas/${chamaId}`)
+        setChama(res.data.chama)
       } catch (err) {
-        console.error('ChamaDetail fetch error:', err)
+        setError(err.response?.data?.message || 'Failed to fetch chama details.')
+        console.error('Chama details fetch error:', err)
+        if (err.response?.status === 403) { // Forbidden, user is not a member
+          navigate('/chamas')
+        }
       } finally {
-        setLoading(false)
+        // setLoading(false) // This will be set by the combined loading
       }
     }
-    if (chamaId) fetchAll()
-  }, [chamaId])
+    const fetchMemberships = async () => {
+      try {
+        const res = await api.get(`/chamas/${chamaId}/members`)
+        setMembers(res.data.memberships)
+      } catch (err) {
+        console.error('Memberships fetch error:', err)
+      }
+    }
+    const fetchContributions = async () => {
+      try {
+        const res = await api.get(`/chamas/${chamaId}/contributions`)
+        setContributions(res.data.contributions)
+      } catch (err) {
+        console.error('Contributions fetch error:', err)
+      }
+    }
+    const fetchLoans = async () => {
+      try {
+        const res = await api.get(`/loans/${chamaId}`)
+        setLoans(res.data.loans)
+        const myLoansRes = await api.get(`/loans/${chamaId}/my`)
+        setMyLoans(myLoansRes.data.loans)
+      } catch (err) {
+        console.error('Loans fetch error:', err)
+      }
+    }
 
-  const balance = chama?.totalBalance || 0
+    if (chamaId) {
+      fetchChamaDetails()
+      fetchMemberships()
+      fetchContributions()
+      fetchLoans()
+    }
+  }, [chamaId, navigate, user?.id]) // Added user.id to dependency array for myLoans
+
+  // Combined loading state
+  useEffect(() => {
+    if (!roleLoading && chama && members.length > 0 && contributions.length > 0 && loans.length > 0) {
+      setLoading(false)
+    } else if (error) {
+      setLoading(false) // If there's an error, stop loading too.
+    }
+  }, [roleLoading, chama, members, contributions, loans, error])
+
+
+  const TABS = [
+    { name: 'Overview', icon: LayoutDashboard, component: OverviewTab, props: { chama, members, chamaId } },
+    { name: 'Members', icon: Users, component: MembersTab, props: { members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan } },
+    { name: 'Contributions', icon: Wallet, component: ContributionsTab, props: { contributions, chamaId, onContribute: () => setIsFundAccountModalOpen(true), canContribute, canViewFinances } },
+    { name: 'Loans', icon: CreditCard, component: LoansTab, props: { loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances } },
+    { name: 'Settings', icon: Settings, component: SettingsTab, props: { chama, chamaId, isAdmin, members } },
+  ]
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#0D0B1E', color: '#F8FAFC' }}>
+        <h1 style={{ fontFamily: 'Syne', fontSize: '32px', marginBottom: '16px' }}>Error</h1>
+        <p style={{ color: '#EF4444', fontSize: '18px', marginBottom: '24px' }}>{error}</p>
+        <Link to="/chamas" style={{ ...BTN_PRIMARY, textDecoration: 'none' }}>Go to My Chamas</Link>
+      </div>
+    )
+  }
+
+  if (loading || roleLoading) { // Use combined loading state here
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#0D0B1E', color: '#F8FAFC' }}>
+        <Loader2 size={48} style={{ animation: 'spin 1s linear infinite', color: '#0EA5E9' }} />
+        <p style={{ fontFamily: 'DM Sans', fontSize: '18px', marginTop: '20px' }}>Loading Chama details...</p>
+      </div>
+    )
+  }
+
+  if (!chama) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#0D0B1E', color: '#F8FAFC' }}>
+        <h1 style={{ fontFamily: 'Syne', fontSize: '32px', marginBottom: '16px' }}>Chama Not Found</h1>
+        <p style={{ color: '#94A3B8', fontSize: '18px', marginBottom: '24px' }}>The requested Chama could not be found or you do not have access.</p>
+        <Link to="/chamas" style={{ ...BTN_PRIMARY, textDecoration: 'none' }}>Go to My Chamas</Link>
+      </div>
+    )
+  }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0D0B1E', fontFamily: "'DM Sans',sans-serif" }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#0D0B1E' }}>
       <div className="mesh-bg" />
       <Sidebar />
       <main className="main-content" style={{ marginLeft: '240px', flex: 1, padding: '32px', position: 'relative', zIndex: 1, overflowY: 'auto', minHeight: '100vh' }}>
 
         {/* Header */}
-        <div style={{ marginBottom: 32 }}>
-          <Link to="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748B', textDecoration: 'none', fontSize: 14, marginBottom: 20, transition: 'color 0.2s' }}>
-            <ArrowLeft size={16} /> My Chamas
-          </Link>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: 32, color: '#FFF', fontWeight: 700, margin: '0 0 8px 0' }}>{loading ? '…' : chama?.name || 'Chama'}</h1>
-              <p style={{ color: '#94A3B8', margin: '0 0 16px 0', fontSize: 15 }}>{chama?.description || 'Loading details…'}</p>
-              <div style={{ display: 'flex', gap: 20 }}>
-                {[
-                  { label: `${members.length} members`, color: '#64748B' },
-                  { label: `Est. ${chama ? new Date(chama.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—'}`, color: '#64748B' },
-                  { label: 'Monthly', color: '#8B5CF6' },
-                  { label: chama?.status === 'inactive' ? 'Inactive' : 'Active', color: '#10B981' },
-                ].map((s, i) => (
-                  <span key={i} style={{ fontSize: 13, color: s.color, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    {i > 0 && <span style={{ color: '#1E293B' }}>·</span>} {s.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginBottom: '12px' }}>
-                <button 
-                  onClick={handleCopyInvite} 
-                  className="btn-ghost" 
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', fontSize: '13px' }} 
-                > 
-                  {copied ? '✓ Copied!' : '🔗 Share Invite'} 
-                </button>
-              </div>
-              <div style={{ color: '#64748B', fontSize: 13, marginBottom: 4 }}>Group Balance</div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 36, fontWeight: 700, color: '#0EA5E9' }}>KES {balance.toLocaleString()}</div>
-              {membership && <Badge label={membership.role || 'Member'} color={membership.role === 'Admin' ? 'gold' : membership.role === 'Treasurer' ? 'blue' : 'purple'} />}
-            </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button onClick={() => navigate('/chamas')} style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid rgba(255,255,255,0.18)', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.8)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.35), 0 4px 16px rgba(0,0,0,0.2)', transition: 'all 0.25s ease' }}>
+              <ArrowLeft size={18} />
+            </button>
+            <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '32px', fontWeight: 700, margin: 0, color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {chama?.name}
+              {role && <Badge label={role.charAt(0).toUpperCase() + role.slice(1)} color={BADGE_ROLE_COLOR_MAP[role] || 'gray'} />}
+            </h1>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {membership && (
+              <span style={{
+                background: `${ROLE_COLOR[membership.role.charAt(0).toUpperCase() + membership.role.slice(1)] || '#64748B'}22`,
+                color: ROLE_COLOR[membership.role.charAt(0).toUpperCase() + membership.role.slice(1)] || '#64748B',
+                padding: '4px 10px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontFamily: 'DM Sans',
+                fontWeight: 600,
+                textTransform: 'capitalize'
+              }}>{membership.role}</span>
+            )}
+            <button style={BTN_PRIMARY} onClick={() => setIsFundAccountModalOpen(true)}><Plus size={16} />Fund Account</button>
           </div>
         </div>
 
-        {/* Tab bar */}
-        <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 4, marginBottom: 36, width: 'fit-content' }}>
-          {[
-            { id: 'overview', label: 'Overview' },
-            { id: 'members', label: 'Members' },
-            { id: 'contributions', label: 'Contributions' },
-            { id: 'loans', label: 'Loans' },
-            { id: 'votes', label: 'Votes' },
-            { id: 'reports', label: 'Reports' },
-            ...(membership?.role === 'admin' ? [{ id: 'settings', label: '⚙️ Settings' }] : [])
-          ].map((tab, i) => {
-            const tabId = tab.id
-            return (
-              <button key={i} onClick={() => setActiveTab(tabId)} style={{
-                padding: '10px 22px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                fontFamily: "'DM Sans',sans-serif", fontSize: 14, fontWeight: activeTab === tabId ? 700 : 500,
-                background: activeTab === tabId ? '#0EA5E9' : 'transparent',
-                color: activeTab === tabId ? '#FFF' : '#94A3B8',
-                transition: 'all 0.2s ease'
-              }}>{tab.label}</button>
-            )
-          })}
+        {/* Tabs */}
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '32px' }}>
+          {TABS.map((tab, i) => (
+            <motion.button
+              key={tab.name}
+              onClick={() => setActiveTab(i)}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '12px 20px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 600,
+                color: activeTab === i ? '#0EA5E9' : '#64748B',
+                borderBottom: activeTab === i ? '2px solid #0EA5E9' : '2px solid transparent',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <tab.icon size={18} /> {tab.name}
+            </motion.button>
+          ))}
         </div>
 
         {/* Tab Content */}
         <AnimatePresence mode="wait">
-          <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-            {activeTab === 'overview' && <OverviewTab chama={chama} members={members} chamaId={chamaId} />}
-            {activeTab === 'members' && <MembersTab members={members} membership={membership} chamaId={chamaId} user={user} />}
-            {activeTab === 'contributions' && <ContributionsTab contributions={contributions} chamaId={chamaId} onContribute={() => setShowContribute(true)} />}
-            {activeTab === 'loans' && <LoansTab loans={loans} myLoans={myLoans} membership={membership} chamaId={chamaId} />}
-            {activeTab === 'votes' && <VotesTab votes={loans.filter(l => l.status === 'pending')} userId={user?._id} />}
-            {activeTab === 'reports' && <ReportsTab chamaId={chamaId} />}
-            {activeTab === 'settings' && ( 
-              <div> 
-                {/* Frozen Banner */} 
-                {chama?.status === 'frozen' && ( 
-                  <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}> 
-                    <span style={{ fontSize: '20px' }}>🔒</span> 
-                    <p style={{ margin: 0, fontFamily: 'DM Sans', color: '#F59E0B' }}>This chama is currently frozen. No contributions or loans are allowed.</p> 
-                  </div> 
-                )} 
- 
-                {/* Settings Form */} 
-                <div className="glass-card" style={{ padding: '28px', marginBottom: '24px' }}> 
-                  <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '24px' }}>Contribution Settings</h3> 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}> 
-                    <div> 
-                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Minimum Contribution (KES)</label> 
-                      <input type="number" value={settings.minContribution} onChange={e => setSettings(p => ({ ...p, minContribution: Number(e.target.value) }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }} /> 
-                    </div> 
-                    <div> 
-                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Frequency</label> 
-                      <select value={settings.contributionFrequency} onChange={e => setSettings(p => ({ ...p, contributionFrequency: e.target.value }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }}> 
-                        <option value="monthly">Monthly</option> 
-                        <option value="weekly">Weekly</option> 
-                      </select> 
-                    </div> 
-                    <div> 
-                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Due Day (1-28)</label> 
-                      <input type="number" min="1" max="28" value={settings.contributionDueDay} onChange={e => setSettings(p => ({ ...p, contributionDueDay: Number(e.target.value) }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }} /> 
-                    </div> 
-                    <div> 
-                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Max Loan Multiplier</label> 
-                      <input type="number" min="1" max="10" value={settings.maxLoanMultiplier} onChange={e => setSettings(p => ({ ...p, maxLoanMultiplier: Number(e.target.value) }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }} /> 
-                    </div> 
-                    <div> 
-                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Loan Vote Threshold (%)</label> 
-                      <input type="number" min="51" max="100" value={settings.loanVoteThreshold} onChange={e => setSettings(p => ({ ...p, loanVoteThreshold: Number(e.target.value) }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }} /> 
-                    </div> 
-                    <div> 
-                      <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Late Penalty Rate (% per day)</label> 
-                      <input type="number" step="0.1" value={settings.latePenaltyRate} onChange={e => setSettings(p => ({ ...p, latePenaltyRate: Number(e.target.value) }))} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.1)' }} /> 
-                    </div> 
-                  </div> 
-                  <button onClick={handleSaveSettings} style={{ ...BTN_PRIMARY, marginTop: '24px' }}>Save Settings</button> 
-                </div> 
- 
-                {/* Danger Zone */} 
-                <div className="glass-card" style={{ padding: '28px', border: '1px solid rgba(239,68,68,0.2)' }}> 
-                  <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#EF4444', marginBottom: '16px' }}>⚠️ Danger Zone</h3> 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}> 
-                    <div> 
-                      <p style={{ fontFamily: 'DM Sans', color: '#F8FAFC', margin: '0 0 4px', fontWeight: 600 }}> 
-                        {chama?.status === 'frozen' ? 'Unfreeze Chama' : 'Freeze Chama'} 
-                      </p> 
-                      <p style={{ fontFamily: 'DM Sans', color: '#64748B', margin: 0, fontSize: '13px' }}> 
-                        {chama?.status === 'frozen' ? 'Allow contributions and loans again' : 'Pause all contributions and loans'} 
-                      </p> 
-                    </div> 
-                    <button 
-                      onClick={handleFreezeChama} 
-                      style={{ padding: '10px 20px', borderRadius: '12px', background: chama?.status === 'frozen' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: chama?.status === 'frozen' ? '#10B981' : '#EF4444', border: `1px solid ${chama?.status === 'frozen' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`, cursor: 'pointer', fontFamily: 'DM Sans', fontWeight: 600 }} 
-                    > 
-                      {chama?.status === 'frozen' ? 'Unfreeze' : 'Freeze'} 
-                    </button> 
-                  </div> 
-                </div> 
- 
-                {/* Audit Log */} 
-                <AuditLogSection chamaId={chamaId} membership={membership} /> 
-              </div> 
-            )}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {TABS[activeTab] && <TABS[activeTab].component {...TABS[activeTab].props} />}
           </motion.div>
         </AnimatePresence>
-
       </main>
-
-      {/* Modals */}
-      <AnimatePresence>
-        {showContribute && <ContributeModal onClose={() => setShowContribute(false)} chamaId={chamaId} user={user} />}
-      </AnimatePresence>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }

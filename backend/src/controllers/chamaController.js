@@ -278,6 +278,53 @@ const freezeChama = async (req, res) => {
   }
 }
 
+const transferAdmin = async (req, res) => {
+  try {
+    const { chamaId, userId: newAdminId } = req.params
+    const Membership = require('../models/Membership')
+
+    // Verify current user is admin 
+    const currentAdminMembership = await Membership.findOne({
+      userId: req.user.userId,
+      chamaId,
+      role: 'admin',
+      status: 'active'
+    })
+    if (!currentAdminMembership) {
+      return res.status(403).json({ success: false, message: 'Only admin can transfer admin rights' })
+    }
+
+    // Verify target user is a member 
+    const targetMembership = await Membership.findOne({
+      userId: newAdminId,
+      chamaId,
+      status: 'active'
+    })
+    if (!targetMembership) {
+      return res.status(404).json({ success: false, message: 'Target user is not a member of this chama' })
+    }
+
+    // Transfer: old admin becomes member, new user becomes admin 
+    currentAdminMembership.role = 'member'
+    targetMembership.role = 'admin'
+    await currentAdminMembership.save()
+    await targetMembership.save()
+
+    const { logAction } = require('../services/auditService')
+    await logAction({
+      chamaId,
+      performedBy: req.user.userId,
+      action: 'admin_transferred',
+      targetUserId: newAdminId,
+      metadata: { from: req.user.userId, to: newAdminId }
+    })
+
+    res.json({ success: true, message: 'Admin rights transferred successfully' })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
 module.exports = {
   createChama,
   getMyChamas,
@@ -287,5 +334,6 @@ module.exports = {
   getMembers,
   changeMemberRole,
   removeMember,
-  freezeChama
+  freezeChama,
+  transferAdmin
 };

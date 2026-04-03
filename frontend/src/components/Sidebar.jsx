@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Building2, CreditCard,
-  Landmark, Bot, Bell, Settings, LogOut, ChevronRight, User
+  Landmark, Bot, Bell, Settings, LogOut, ChevronRight, User, Shield
 } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 
@@ -164,7 +164,6 @@ export default function Sidebar({ unreadCount = 0 }) {
                 fontWeight: isActive ? 600 : 400,
                 color: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.45)',
                 letterSpacing: '-0.01em',
-                transition: 'color 0.2s ease',
               }}>
                 {item.label}
               </span>
@@ -189,6 +188,27 @@ export default function Sidebar({ unreadCount = 0 }) {
             </motion.div>
           )
         })}
+        
+        {user?.isSuperAdmin && (
+          <motion.div
+            whileHover={{ x: 4 }}
+            onClick={() => navigate('/admin')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '12px 16px', borderRadius: '12px', cursor: 'pointer',
+              marginBottom: '4px', marginTop: '8px',
+              background: location.pathname === '/admin' ? 'rgba(245,158,11,0.1)' : 'rgba(245,158,11,0.05)',
+              borderLeft: location.pathname === '/admin' ? '3px solid #F59E0B' : '3px solid rgba(245,158,11,0.3)',
+              border: '1px solid rgba(245,158,11,0.2)'
+            }}
+          >
+            <Shield size={18} color="#F59E0B" />
+            <span style={{ fontFamily: 'DM Sans', fontSize: '14px', fontWeight: 600, color: '#F59E0B' }}>
+              Super Admin
+            </span>
+          </motion.div>
+        )}
+
       </nav>
 
       {/* Divider */}

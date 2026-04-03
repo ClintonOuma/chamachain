@@ -5,7 +5,7 @@ const { requireRole } = require('../middleware/rbac');
 const {
   createChama, getMyChamas, getChamaById,
   updateChama, joinChama, getMembers,
-  changeMemberRole, removeMember, freezeChama
+  changeMemberRole, removeMember, freezeChama, transferAdmin
 } = require('../controllers/chamaController');
 const AuditLog = require('../models/AuditLog')
 
@@ -18,6 +18,22 @@ router.get('/:chamaId/members', protect, getMembers);
 router.patch('/:chamaId/members/:userId/role', protect, requireRole('admin'), changeMemberRole);
 router.delete('/:chamaId/members/:userId', protect, requireRole('admin'), removeMember);
 router.patch('/:chamaId/freeze', protect, requireRole('admin'), freezeChama)
+router.patch('/:chamaId/transfer-admin/:userId', protect, requireRole('admin'), transferAdmin)
+
+router.get('/:chamaId/my-role', protect, async (req, res) => {
+  try {
+    const Membership = require('../models/Membership')
+    const membership = await Membership.findOne({
+      userId: req.user.userId,
+      chamaId: req.params.chamaId,
+      status: 'active'
+    })
+    if (!membership) return res.status(404).json({ success: false, message: 'Not a member' })
+    res.json({ success: true, role: membership.role, membership })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
 
 router.get('/:chamaId/audit', protect, requireRole('admin', 'treasurer'), async (req, res) => { 
   try { 
@@ -43,9 +59,9 @@ router.get('/:chamaId/leaderboard', protect, async (req, res) => {
     .sort({ totalContributed: -1 }) 
     .limit(10) 
     res.json({ success: true, leaderboard }) 
-  } catch (err) { 
+  } catch (err) {
     res.status(500).json({ success: false, message: err.message }) 
   } 
-}) 
+})
 
 module.exports = router;

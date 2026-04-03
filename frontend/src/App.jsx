@@ -17,6 +17,7 @@ import NotificationsPage from './pages/NotificationsPage'
 import ProfilePage from './pages/ProfilePage' 
 import JoinPage from './pages/JoinPage' 
 import OnboardingPage from './pages/OnboardingPage' 
+import SuperAdminPage from './pages/SuperAdminPage' 
 
 const ProtectedRoute = ({ children }) => { 
   const { isAuthenticated } = useAuthStore() 
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/ai-coach" element={<ProtectedRoute><AICoachPage /></ProtectedRoute>} /> 
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} /> 
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} /> 
+        <Route path="/admin" element={<ProtectedRoute><SuperAdminPage /></ProtectedRoute>} /> 
         <Route path="*" element={ 
           <div style={{ minHeight: '100vh', background: '#0D0B1E', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}> 
             <div className="mesh-bg" /> 

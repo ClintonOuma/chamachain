@@ -7,6 +7,9 @@ const userSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   avatar: { type: String, default: '' },
   isVerified: { type: Boolean, default: false },
+  isSuperAdmin: { type: Boolean, default: false },
+  isSuspended: { type: Boolean, default: false },
+  suspendedReason: { type: String, default: '' },
   otpHash: { type: String, default: null },
   otpExpiry: { type: Date, default: null },
   refreshTokenHash: { type: String, default: null },
@@ -16,6 +19,6 @@ const userSchema = new mongoose.Schema({
     email: { type: Boolean, default: true },
     inApp: { type: Boolean, default: true }
   }
-}, { timestamps: true });
+}, { timestamps: true })
 
 module.exports = mongoose.model('User', userSchema);

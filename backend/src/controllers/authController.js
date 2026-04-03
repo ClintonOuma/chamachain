@@ -146,7 +146,13 @@ const login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' })
     }
-    const accessToken = generateAccessToken(user._id, 'member')
+    if (user.isSuspended) {
+      return res.status(403).json({
+        success: false,
+        message: `Your account has been suspended. Reason: ${user.suspendedReason || 'Violation of terms'}. Contact support.`
+      })
+    }
+    const accessToken = generateAccessToken(user._id, 'member', user.isSuperAdmin)
     const refreshToken = generateRefreshToken(user._id)
     const refreshTokenHash = await bcrypt.hash(refreshToken, 10)
     user.refreshTokenHash = refreshTokenHash
@@ -157,6 +163,7 @@ const login = async (req, res) => {
       email: user.email,
       phone: user.phone,
       avatar: user.avatar,
+      isSuperAdmin: user.isSuperAdmin,
       notificationPrefs: user.notificationPrefs
     }
     res.json({

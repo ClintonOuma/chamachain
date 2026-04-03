@@ -76,14 +76,15 @@ export default function ChamasPage() {
                       fontSize: '24px'
                     }}>🏦</div>
                     <span style={{
-                      background: `${roleColors[role] || '#64748B'}22`,
+                      background: `${roleColors[role] || '#64748B'}15`,
                       color: roleColors[role] || '#64748B',
-                      padding: '4px 10px',
-                      borderRadius: '20px',
-                      fontSize: '12px',
+                      padding: '3px 10px',
+                      borderRadius: '8px',
+                      fontSize: '11px',
                       fontFamily: 'DM Sans',
-                      fontWeight: 600,
-                      textTransform: 'capitalize'
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
                     }}>{role}</span>
                   </div>
                   <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', margin: '0 0 8px' }}>{chama.name}</h3>

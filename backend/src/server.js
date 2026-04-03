@@ -4,7 +4,8 @@ const cors = require("cors");
 const helmet = require("helmet");
 const dotenv = require("dotenv");
 const http = require("http");
-const { Server } = require("socket.io");
+const socketService = require('./services/socketService');
+let io; // Declare io at module scope
 const mongoose = require("mongoose");
 const { validateEnv } = require("./config/validateEnv");
 const { startCronJobs } = require('./services/cronService');
@@ -80,9 +81,11 @@ app.use('/api/v1/ai', aiRoutes);
 const reportRoutes = require('./routes/reportRoutes') 
 app.use('/api/v1/reports', reportRoutes) 
 
+const superAdminRoutes = require('./routes/superAdminRoutes') 
+app.use('/api/v1/super-admin', superAdminRoutes) 
+
 const server = http.createServer(app);
-const socketService = require('./services/socketService');
-socketService.init(server);
+io = socketService.init(server);
 
 const mongoUri = process.env.MONGODB_URI.trim();
 

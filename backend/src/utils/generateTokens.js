@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken')
 const { getJwtAccessSecret, getJwtRefreshSecret } = require('../config/jwtSecrets')
 
-const generateAccessToken = (userId, role) => {
+const generateAccessToken = (userId, role, isSuperAdmin = false) => {
   const id = String(userId)
-  return jwt.sign({ userId: id, role }, getJwtAccessSecret(), { expiresIn: '15m' })
+  return jwt.sign({ userId: id, role, isSuperAdmin }, getJwtAccessSecret(), { expiresIn: '15m' })
 }
 
 const generateRefreshToken = (userId) => {

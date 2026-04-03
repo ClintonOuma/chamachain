@@ -7,6 +7,7 @@ import api from '../services/api'
 import useAuthStore from '../store/authStore'
 import SkeletonCard from '../components/SkeletonCard'
 import usePageTitle from '../hooks/usePageTitle'
+import useMyRole from '../hooks/useMyRole'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FLOATING INPUT - Liquid Glass Style
@@ -216,6 +217,7 @@ export default function DashboardPage() {
   usePageTitle('Dashboard')
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+  const { isAdmin } = useMyRole()
 
   const [chamas, setChamas] = useState([])
   const [notifications, setNotifications] = useState([])
@@ -781,6 +783,80 @@ export default function DashboardPage() {
             </div>
           </section>
         </div>
+
+        {isAdmin && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="glass-card"
+            style={{
+              padding: '24px',
+              marginBottom: '44px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '20px',
+              background: 'rgba(255,255,255,0.05)',
+            }}
+          >
+            <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#F8FAFC', margin: '0 0 16px 0' }}>Admin Panel</h2>
+            <p style={{ color: '#94A3B8', marginBottom: '20px' }}>
+              Welcome, Admin! Here you can manage global settings and view system-wide alerts.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                style={{
+                  background: 'rgba(74,195,255,0.1)',
+                  color: '#4ac3ff',
+                  border: '1px solid rgba(74,195,255,0.3)',
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+                onClick={() => alert('View all users functionality coming soon!')}
+              >
+                <Users size={18} /> All Users
+              </button>
+              <button
+                style={{
+                  background: 'rgba(255,214,10,0.1)',
+                  color: '#ffd60a',
+                  border: '1px solid rgba(255,214,10,0.3)',
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+                onClick={() => alert('System health report coming soon!')}
+              >
+                <Activity size={18} /> System Health
+              </button>
+              <button
+                style={{
+                  background: 'rgba(255,69,58,0.1)',
+                  color: '#ff453a',
+                  border: '1px solid rgba(255,69,58,0.3)',
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+                onClick={() => alert('Review flagged content coming soon!')}
+              >
+                <Bell size={18} /> Flagged Content
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Quick Actions */}
         <section>
