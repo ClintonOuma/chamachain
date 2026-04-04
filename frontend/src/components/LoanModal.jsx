@@ -214,7 +214,7 @@ export default function LoanModal({ chamaId, chamaName, membership, onClose, onS
             {disburseMethod === 'manual' && (
               <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
                 <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8', margin: '0 0 8px' }}>The admin will manually transfer to your bank account.</p>
-                <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#F8FAFC', margin: 0 }>Share your bank details with your chama admin.</p>
+                <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#F8FAFC', margin: 0 }}>Share your bank details with your chama admin.</p>
               </div>
             )}
 
