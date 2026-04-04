@@ -107,7 +107,7 @@ export default function LoanModal({ chamaId, chamaName, membership, onClose, onS
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ margin: 0, fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B' }}>Auto-approval if score</p>
-                  <p style={{ margin: '4px 0 0', fontFamily: 'DM Sans', fontSize: '13px', color: '#F8FAFC' }}>≥ 60 ✅ · 40-59 ⚠️ Review · < 40 ❌</p>
+                  <p style={{ margin: '4px 0 0', fontFamily: 'DM Sans', fontSize: '13px', color: '#F8FAFC' }}>≥ 60 ✅ · 40-59 ⚠️ Review · &lt; 40 ❌</p>
                 </div>
               </div>
             )}
