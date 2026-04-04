@@ -547,7 +547,7 @@ function RequestLoanModal({ chamaId, onClose }) {
     setLoading(true)
     setError(null)
     try {
-      await api.post(`/loans/${chamaId}/request`, { amount: parseFloat(amount), reason })
+      await api.post(`/loans/request`, { chamaId, amount: parseFloat(amount), reason })
       alert('Loan request submitted successfully!')
       onClose()
       window.location.reload()
