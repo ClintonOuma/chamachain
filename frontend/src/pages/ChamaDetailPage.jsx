@@ -538,7 +538,8 @@ function SettingsTab({ chama, chamaId, isAdmin, members }) {
 
 function RequestLoanModal({ chamaId, onClose }) {
   const [amount, setAmount] = useState('')
-  const [reason, setReason] = useState('')
+  const [purpose, setPurpose] = useState('')
+  const [repaymentMonths, setRepaymentMonths] = useState(1) // Default to 1 month
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -547,7 +548,7 @@ function RequestLoanModal({ chamaId, onClose }) {
     setLoading(true)
     setError(null)
     try {
-      await api.post(`/loans/request`, { chamaId, amount: parseFloat(amount), reason })
+      await api.post(`/loans/request`, { chamaId, amount: parseFloat(amount), purpose, repaymentMonths: parseInt(repaymentMonths) })
       alert('Loan request submitted successfully!')
       onClose()
       window.location.reload()
@@ -582,11 +583,18 @@ function RequestLoanModal({ chamaId, onClose }) {
             error={error?.includes('Amount') ? error : null}
           />
           <FloatingInput
-            label="Reason for Loan"
+            label="Purpose for Loan"
             type="text"
-            value={reason}
-            onChange={e => setReason(e.target.value)}
-            error={error?.includes('Reason') ? error : null}
+            value={purpose}
+            onChange={e => setPurpose(e.target.value)}
+            error={error?.includes('Purpose') ? error : null}
+          />
+          <FloatingInput
+            label="Repayment Months"
+            type="number"
+            value={repaymentMonths}
+            onChange={e => setRepaymentMonths(e.target.value)}
+            error={error?.includes('Repayment Months') ? error : null}
           />
 
           {error && <p style={{ color: '#EF4444', fontSize: '13px', marginBottom: '16px' }}>{error}</p>}
