@@ -44,7 +44,7 @@ const register = async (req, res) => {
       passwordHash,
       isVerified: true
     })
-    const accessToken = generateAccessToken(user._id, 'member')
+    const accessToken = generateAccessToken(user._id, user.isSuperAdmin ? 'admin' : 'member', user.isSuperAdmin)
     const refreshToken = generateRefreshToken(user._id)
     const refreshTokenHash = await bcrypt.hash(refreshToken, 10)
     user.refreshTokenHash = refreshTokenHash
@@ -55,6 +55,7 @@ const register = async (req, res) => {
       email: user.email,
       phone: user.phone,
       avatar: user.avatar,
+      isSuperAdmin: user.isSuperAdmin,
       notificationPrefs: user.notificationPrefs
     }
     res.status(201).json({
@@ -152,7 +153,7 @@ const login = async (req, res) => {
         message: `Your account has been suspended. Reason: ${user.suspendedReason || 'Violation of terms'}. Contact support.`
       })
     }
-    const accessToken = generateAccessToken(user._id, 'member', user.isSuperAdmin)
+    const accessToken = generateAccessToken(user._id, user.isSuperAdmin ? 'admin' : 'member', user.isSuperAdmin)
     const refreshToken = generateRefreshToken(user._id)
     const refreshTokenHash = await bcrypt.hash(refreshToken, 10)
     user.refreshTokenHash = refreshTokenHash
