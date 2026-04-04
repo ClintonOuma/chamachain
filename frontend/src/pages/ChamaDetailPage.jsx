@@ -560,13 +560,14 @@ export default function ChamaDetailPage() {
         const res = await api.get(`/chamas/${chamaId}`)
         setChama(res.data.chama)
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch chama details.')
+        const errorMsg = err.response?.data?.message || 'Failed to fetch chama details.'
+        setError(errorMsg)
         console.error('Chama details fetch error:', err)
         if (err.response?.status === 403) { // Forbidden, user is not a member
-          navigate('/chamas')
+          setError('You are not a member of this chama. Please join to access it.')
         }
       } finally {
-        // setLoading(false) // This will be set by the combined loading
+        setLoading(false) // Ensure loading is set to false
       }
     }
     const fetchMemberships = async () => {

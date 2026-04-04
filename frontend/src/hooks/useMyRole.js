@@ -6,11 +6,32 @@ export default function useMyRole(chamaId) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!chamaId) return 
+    if (!chamaId) {
+      setLoading(false)
+      return 
+    }
+    
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('useMyRole timeout - setting role to null')
+        setRole(null)
+        setLoading(false)
+      }
+    }, 3000)
+    
     api.get(`/chamas/${chamaId}/my-role`)
       .then(res => setRole(res.data.role))
-      .catch(() => setRole(null))
-      .finally(() => setLoading(false))
+      .catch(err => {
+        console.log('User is not a member or role fetch failed:', err.response?.status)
+        setRole(null)
+      })
+      .finally(() => {
+        setLoading(false)
+        clearTimeout(timeout)
+      })
+      
+    return () => clearTimeout(timeout)
   }, [chamaId])
 
   return {
