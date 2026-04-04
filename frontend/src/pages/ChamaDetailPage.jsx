@@ -721,12 +721,9 @@ export default function ChamaDetailPage() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            {activeTab === 0 && <OverviewTab chama={chama} members={members} />}
-            {activeTab === 1 && <MembersTab members={members} isAdmin={isAdmin} chama={chama} setChama={setChama} />}
-            {activeTab === 2 && <ContributionsTab contributions={contributions} chamaId={chamaId} onContribute={() => setShowContribute(true)} />}
-            {activeTab === 3 && <LoansTab loans={loans} isAdmin={isAdmin} chamaId={chamaId} />}
-            {activeTab === 4 && <VotesTab votes={votes} userId={user?._id} />}
-            {activeTab === 5 && <ReportsTab />}
+            {TABS.map((tab, i) => (
+              activeTab === i && <tab.component key={i} {...tab.props} />
+            ))}
           </motion.div>
         </AnimatePresence>
       </main>
