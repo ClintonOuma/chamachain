@@ -214,7 +214,7 @@ function OverviewTab({ chama, members, chamaId }) {
   )
 }
 
-function MembersTab({ members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan }) {
+function MembersTab({ members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan, chama }) {
   const [query, setQuery] = useState('')
   const filtered = members.filter(m => (m.userId?.fullName || '').toLowerCase().includes(query.toLowerCase()))
 
@@ -226,6 +226,21 @@ function MembersTab({ members, membership, chamaId, user, isAdmin, isTreasurer, 
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search members…"
             style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#F8FAFC', padding: '10px 12px 10px 40px', fontFamily: 'DM Sans,sans-serif', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
         </div>
+        
+        {chama?.inviteCode && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(14,165,233,0.05)', padding: '8px 16px', borderRadius: '14px', border: '1px solid rgba(14,165,233,0.15)' }}>
+            <span style={{ color: '#0EA5E9', fontSize: '13px', fontFamily: 'DM Sans', fontWeight: 600 }}>Invite Friends:</span>
+            <span style={{ color: '#F8FAFC', fontSize: '18px', fontWeight: 800, fontFamily: 'JetBrains Mono', letterSpacing: '2px' }}>{chama.inviteCode}</span>
+            <button 
+              onClick={() => { navigator.clipboard.writeText(chama.inviteCode); alert('Invite code copied!') }} 
+              style={{ background: 'rgba(14,165,233,0.15)', color: '#0EA5E9', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 700, fontFamily: 'DM Sans', transition: 'all 0.2s' }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(14,165,233,0.25)'}
+              onMouseOut={e => e.currentTarget.style.background = 'rgba(14,165,233,0.15)'}
+            >
+              Copy
+            </button>
+          </div>
+        )}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
         {filtered.map((member, i) => {
@@ -408,12 +423,10 @@ function SettingsTab({ chama, chamaId, isAdmin, members }) {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (isAdmin) {
-      api.get(`/chamas/${chamaId}/invite-code`)
-        .then(res => setInviteCode(res.data.inviteCode))
-        .catch(err => console.error('Error fetching invite code:', err))
+    if (isAdmin && chama?.inviteCode) {
+      setInviteCode(chama.inviteCode)
     }
-  }, [chamaId, isAdmin])
+  }, [chama, isAdmin])
 
   const handleLeaveChama = async () => {
     if (window.confirm('Are you sure you want to leave this Chama?')) {
@@ -547,7 +560,7 @@ export default function ChamaDetailPage() {
 
   const TABS = [
     { name: 'Overview', icon: LayoutDashboard, component: OverviewTab, props: { chama, members, chamaId } },
-    { name: 'Members', icon: Users, component: MembersTab, props: { members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan } },
+    { name: 'Members', icon: Users, component: MembersTab, props: { members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan, chama } },
     { name: 'Contributions', icon: Wallet, component: ContributionsTab, props: { contributions, chamaId, onContribute: () => setIsFundAccountModalOpen(true), canContribute, canViewFinances } },
     { name: 'Loans', icon: CreditCard, component: LoansTab, props: { loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances } },
     { name: 'Settings', icon: Settings, component: SettingsTab, props: { chama, chamaId, isAdmin, members } },
