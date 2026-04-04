@@ -586,9 +586,9 @@ export default function ChamaDetailPage() {
     const fetchMemberships = async () => {
       try {
         const res = await api.get(`/chamas/${chamaId}/members`)
-        setMembers(res.data.memberships || [])
+        setMembers(res.data.members || [])
       } catch (err) {
-        console.error('Memberships fetch error:', err)
+        console.error('Members fetch error:', err)
         setMembers([])
       }
     }
