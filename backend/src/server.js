@@ -78,6 +78,9 @@ app.use('/api/v1/users', userRoutes);
 const aiRoutes = require('./routes/aiRoutes');
 app.use('/api/v1/ai', aiRoutes);
 
+const mpesaRoutes = require('./routes/mpesaRoutes')
+app.use('/api/v1/mpesa', mpesaRoutes)
+
 const reportRoutes = require('./routes/reportRoutes') 
 app.use('/api/v1/reports', reportRoutes) 
 

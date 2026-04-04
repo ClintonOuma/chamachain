@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import ContributeModal from '../components/ContributeModal'
+import LoanModal from '../components/LoanModal'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
@@ -536,135 +538,9 @@ function SettingsTab({ chama, chamaId, isAdmin, members }) {
   )
 }
 
-function RequestLoanModal({ chamaId, onClose }) {
-  const [amount, setAmount] = useState('')
-  const [purpose, setPurpose] = useState('')
-  const [repaymentMonths, setRepaymentMonths] = useState(1) // Default to 1 month
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-    try {
-      await api.post(`/loans/request`, { chamaId, amount: parseFloat(amount), purpose, repaymentMonths: parseInt(repaymentMonths) })
-      alert('Loan request submitted successfully!')
-      onClose()
-      window.location.reload()
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to request loan.')
-      console.error('Loan request error:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="glass-card"
-        style={{ width: '400px', padding: '36px' }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h3 style={{ fontFamily: "'Syne',sans-serif", fontSize: '22px', color: '#F8FAFC', fontWeight: 700 }}>Request Loan</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}><X size={20} /></button>
-        </div>
 
-        <form onSubmit={handleSubmit}>
-          <FloatingInput
-            label="Amount (KES)"
-            type="number"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            error={error?.includes('Amount') ? error : null}
-          />
-          <FloatingInput
-            label="Purpose for Loan"
-            type="text"
-            value={purpose}
-            onChange={e => setPurpose(e.target.value)}
-            error={error?.includes('Purpose') ? error : null}
-          />
-          <FloatingInput
-            label="Repayment Months"
-            type="number"
-            value={repaymentMonths}
-            onChange={e => setRepaymentMonths(e.target.value)}
-            error={error?.includes('Repayment Months') ? error : null}
-          />
-
-          {error && <p style={{ color: '#EF4444', fontSize: '13px', marginBottom: '16px' }}>{error}</p>}
-
-          <button type="submit" style={BTN_PRIMARY} disabled={loading}>
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-            {loading ? 'Submitting...' : 'Submit Request'}
-          </button>
-        </form>
-      </motion.div>
-    </div>
-  )
-}
-
-function RepayLoanModal({ chamaId, loanId, onClose }) {
-  const [amount, setAmount] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-    try {
-      await api.patch(`/loans/${chamaId}/${loanId}/repay`, { amount: parseFloat(amount) })
-      alert('Loan repaid successfully!')
-      onClose()
-      window.location.reload()
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to repay loan.')
-      console.error('Loan repayment error:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="glass-card"
-        style={{ width: '400px', padding: '36px' }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h3 style={{ fontFamily: "'Syne',sans-serif", fontSize: '22px', color: '#F8FAFC', fontWeight: 700 }}>Repay Loan</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}><X size={20} /></button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <FloatingInput
-            label="Amount (KES)"
-            type="number"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            error={error?.includes('Amount') ? error : null}
-          />
-
-          {error && <p style={{ color: '#EF4444', fontSize: '13px', marginBottom: '16px' }}>{error}</p>}
-
-          <button type="submit" style={BTN_PRIMARY} disabled={loading}>
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <DollarSign size={16} />}
-            {loading ? 'Processing...' : 'Submit Repayment'}
-          </button>
-        </form>
-      </motion.div>
-    </div>
-  )
-}
 
 
 export default function ChamaDetailPage() {
@@ -681,8 +557,8 @@ export default function ChamaDetailPage() {
   const { role, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan, loading: roleLoading } = useMyRole(chamaId)
   const [error, setError] = useState(null)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
-  const [isFundAccountModalOpen, setIsFundAccountModalOpen] = useState(false)
-  const [isRequestLoanModalOpen, setIsRequestLoanModalOpen] = useState(false)
+  const [showContribute, setShowContribute] = useState(false)
+  const [showLoan, setShowLoan] = useState(false)
   const [isRepayLoanModalOpen, setIsRepayLoanModalOpen] = useState(false)
   const [selectedLoanId, setSelectedLoanId] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
@@ -704,8 +580,8 @@ export default function ChamaDetailPage() {
   const TABS = [
     { name: 'Overview', icon: LayoutDashboard, component: OverviewTab, props: { chama, members, chamaId } },
     { name: 'Members', icon: Users, component: MembersTab, props: { members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan, chama } },
-    { name: 'Contributions', icon: Wallet, component: ContributionsTab, props: { contributions, chamaId, onContribute: () => setIsFundAccountModalOpen(true), canContribute, canViewFinances } },
-    { name: 'Loans', icon: CreditCard, component: LoansTab, props: { loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances, onRequestLoan: () => setIsRequestLoanModalOpen(true), onRepayLoan: (loanId) => { setSelectedLoanId(loanId); setIsRepayLoanModalOpen(true) } } },
+    { name: 'Contributions', icon: Wallet, component: ContributionsTab, props: { contributions, chamaId, onContribute: () => setShowContribute(true), canContribute, canViewFinances } },
+    { name: 'Loans', icon: CreditCard, component: LoansTab, props: { loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances, onRequestLoan: () => setShowLoan(true), onRepayLoan: (loanId) => { setSelectedLoanId(loanId); setIsRepayLoanModalOpen(true) } } },
     { name: 'Settings', icon: Settings, component: SettingsTab, props: { chama, chamaId, isAdmin, members } },
   ];
 
@@ -836,7 +712,7 @@ export default function ChamaDetailPage() {
                 textTransform: 'capitalize'
               }}>{membership.role}</span>
             )}
-            <button style={BTN_PRIMARY} onClick={() => setIsFundAccountModalOpen(true)}><Plus size={16} />Fund Account</button>
+            <button style={BTN_PRIMARY} onClick={() => setShowContribute(true)}><Plus size={16} />Fund Account</button>
           </div>
         </div>
 
@@ -887,12 +763,23 @@ export default function ChamaDetailPage() {
           <LeaveChamaModal chamaId={chamaId} onClose={() => setIsLeaveModalOpen(false)} />
         )}
 
-        {isFundAccountModalOpen && (
-          <FundAccountModal chamaId={chamaId} onClose={() => setIsFundAccountModalOpen(false)} />
+        {showContribute && (
+          <ContributeModal
+            chamaId={chamaId}
+            chamaName={chama?.name}
+            onClose={() => setShowContribute(false)}
+            onSuccess={() => window.location.reload()}
+          />
         )}
 
-        {isRequestLoanModalOpen && (
-          <RequestLoanModal chamaId={chamaId} onClose={() => setIsRequestLoanModalOpen(false)} />
+        {showLoan && (
+          <LoanModal
+            chamaId={chamaId}
+            chamaName={chama?.name}
+            membership={membership}
+            onClose={() => setShowLoan(false)}
+            onSuccess={() => window.location.reload()}
+          />
         )}
 
         {isRepayLoanModalOpen && (

@@ -8,6 +8,8 @@ import useAuthStore from '../store/authStore'
 import SkeletonCard from '../components/SkeletonCard'
 import usePageTitle from '../hooks/usePageTitle'
 import useMyRole from '../hooks/useMyRole'
+import ContributeModal from '../components/ContributeModal'
+import LoanModal from '../components/LoanModal'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FLOATING INPUT - Liquid Glass Style
@@ -227,6 +229,9 @@ export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState('dashboard')
   const [showCreateChama, setShowCreateChama] = useState(false)
   const [showContribute, setShowContribute] = useState(false)
+  const [showLoan, setShowLoan] = useState(false)
+  const [membership, setMembership] = useState(null)
+  const [selectedChamaForAction, setSelectedChamaForAction] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const [newChama, setNewChama] = useState({ name: '', description: '' })
@@ -258,15 +263,21 @@ export default function DashboardPage() {
         }, 0)
         setTotalSavings(total)
 
-        // Fetch loans if chamas exist
+        // Fetch loans and membership if chamas exist
         if (chamaList.length > 0) {
-          const firstChamaId = chamaList[0].chamaId?._id || chamaList[0]._id
+          const firstChama = chamaList[0]
+          const firstChamaId = firstChama.chamaId?._id || firstChama._id
           try {
-            const loansRes = await api.get(`/loans/${firstChamaId}/my`)
+            const [loansRes, membershipRes] = await Promise.all([
+              api.get(`/loans/${firstChamaId}/my`),
+              api.get(`/chamas/${firstChamaId}/membership`) // Assuming this endpoint exists
+            ])
             const activeLoans = (loansRes.data.loans || []).filter(l => l.status === 'disbursed')
             setActiveLoansCount(activeLoans.length)
+            setMembership(membershipRes.data)
           } catch (e) {
             setActiveLoansCount(0)
+            console.error('Error fetching loans or membership:', e)
           }
         }
       } catch (err) {
@@ -347,10 +358,26 @@ export default function DashboardPage() {
   ]
 
   const quickActions = [
-    { label: 'Contribute', icon: Wallet, accentColor: '#32d74b', action: () => setShowContribute(true) },
-    { label: 'Request Loan', icon: CreditCard, accentColor: '#4ac3ff', action: () => alert('Loans coming soon') },
-    { label: 'Invite Member', icon: Users, accentColor: '#5e5ce6', action: () => alert('Invites coming soon') },
-    { label: 'View Reports', icon: TrendingUp, accentColor: '#ffd60a', action: () => alert('Reports coming soon') },
+    { label: 'Contribute', icon: Wallet, accentColor: '#32d74b', glowColor: 'rgba(50,215,75,0.20)', action: () => {
+      if (chamas.length === 0) return alert('Join a chama first')
+      const firstChama = chamas[0]
+      setSelectedChamaForAction({
+        id: firstChama.chamaId?._id || firstChama._id,
+        name: firstChama.chamaId?.name || firstChama.name
+      })
+      setShowContribute(true)
+    } },
+    { label: 'Request Loan', icon: CreditCard, accentColor: '#4ac3ff', glowColor: 'rgba(74,195,255,0.20)', action: () => {
+      if (chamas.length === 0) return alert('Join a chama first')
+      const firstChama = chamas[0]
+      setSelectedChamaForAction({
+        id: firstChama.chamaId?._id || firstChama._id,
+        name: firstChama.chamaId?.name || firstChama.name
+      })
+      setShowLoan(true)
+    } },
+    { label: 'Invite Member', icon: Users, accentColor: '#5e5ce6', glowColor: 'rgba(94,92,230,0.20)', action: () => alert('Invites coming soon') },
+    { label: 'View Reports', icon: TrendingUp, accentColor: '#ffd60a', glowColor: 'rgba(255,214,10,0.15)', action: () => alert('Reports coming soon') },
   ]
 
   return (
@@ -970,114 +997,23 @@ export default function DashboardPage() {
           </GlassModal>
         )}
 
-        {showContribute && (
-          <GlassModal onClose={() => setShowContribute(false)}>
-            <button
-              onClick={() => setShowContribute(false)}
-              style={{
-                position: 'absolute', top: '20px', right: '20px',
-                background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                width: '32px', height: '32px',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'rgba(255,255,255,0.55)',
-                backdropFilter: 'blur(14px)',
-                boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.22)',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <X size={15} />
-            </button>
-            <h2 style={{
-              fontSize: '22px', color: 'rgba(255,255,255,0.95)',
-              margin: '0 0 28px 0', fontWeight: 700, letterSpacing: '-0.02em',
-            }}>
-              Make Contribution
-            </h2>
+        {showContribute && selectedChamaForAction && (
+          <ContributeModal
+            chamaId={selectedChamaForAction.id}
+            chamaName={selectedChamaForAction.name}
+            onClose={() => setShowContribute(false)}
+            onSuccess={() => { setShowContribute(false); window.location.reload() }}
+          />
+        )}
 
-            <div style={{ position: 'relative', marginBottom: '24px' }}>
-              <select
-                value={contribData.chamaId}
-                onChange={(e) => setContribData({ ...contribData, chamaId: e.target.value })}
-                style={{
-                  width: '100%', height: '58px',
-                  background: 'rgba(255,255,255,0.06)',
-                  backdropFilter: 'blur(14px)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: '14px',
-                  color: contribData.chamaId ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.38)',
-                  padding: '0 44px 0 16px',
-                  fontSize: '15px', outline: 'none', appearance: 'none',
-                  letterSpacing: '-0.01em',
-                  boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.15)',
-                }}
-              >
-                <option value="" disabled style={{ background: '#0a1628' }}>Select Chama...</option>
-                {chamas.map(c => (
-                  <option key={c._id} value={c._id} style={{ background: '#0a1628' }}>{c.name}</option>
-                ))}
-              </select>
-              <ChevronDown size={16} style={{ position: 'absolute', right: '16px', top: '21px', color: 'rgba(255,255,255,0.38)', pointerEvents: 'none' }} />
-            </div>
-
-            <FloatingInput
-              label="Amount (KES)"
-              type="number"
-              value={contribData.amount}
-              onChange={(e) => setContribData({ ...contribData, amount: e.target.value })}
-            />
-            <FloatingPhoneInput
-              value={contribData.mpesaPhone}
-              onChange={(val) => setContribData({ ...contribData, mpesaPhone: val })}
-            />
-
-            {contribSuccess && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                style={{
-                  padding: '14px 16px',
-                  background: 'rgba(50,215,75,0.10)',
-                  border: '1px solid rgba(50,215,75,0.25)',
-                  borderRadius: '12px',
-                  color: '#32d74b',
-                  fontSize: '13.5px',
-                  textAlign: 'center',
-                  marginBottom: '16px',
-                  boxShadow: 'inset 0 0.5px 0 rgba(50,215,75,0.18)',
-                }}
-              >
-                {contribSuccess}
-              </motion.div>
-            )}
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              disabled={modalLoading || !!contribSuccess}
-              onClick={handleContribute}
-              style={{
-                width: '100%', height: '54px',
-                background: 'linear-gradient(180deg, rgba(50,215,75,0.82) 0%, rgba(50,215,75,0.62) 100%)',
-                color: 'rgba(255,255,255,0.95)',
-                border: '1px solid rgba(50,215,75,0.40)',
-                borderRadius: '14px',
-                fontSize: '15px', fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backdropFilter: 'blur(14px)',
-                boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.35), 0 0 24px rgba(50,215,75,0.2), 0 4px 16px rgba(0,0,0,0.2)',
-                transition: 'all 0.25s ease',
-                opacity: modalLoading || contribSuccess ? 0.6 : 1,
-              }}
-            >
-              {modalLoading
-                ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
-                : 'Contribute via M-Pesa'}
-            </motion.button>
-          </GlassModal>
+        {showLoan && selectedChamaForAction && membership && (
+          <LoanModal
+            chamaId={selectedChamaForAction.id}
+            chamaName={selectedChamaForAction.name}
+            membership={membership}
+            onClose={() => setShowLoan(false)}
+            onSuccess={() => { setShowLoan(false); window.location.reload() }}
+          />
         )}
       </AnimatePresence>
     </div>
