@@ -1,14 +1,23 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
+import useAuthStore from '../store/authStore'
 
 export default function useMyRole(chamaId) {
   const [role, setRole] = useState(null)
   const [loading, setLoading] = useState(true)
+  const { user } = useAuthStore()
 
   useEffect(() => {
     if (!chamaId) {
       setLoading(false)
       return 
+    }
+    
+    // Check if user is super admin
+    if (user?.isSuperAdmin) {
+      setRole('admin') // Super admins have admin privileges for all chamas
+      setLoading(false)
+      return
     }
     
     // Add timeout to prevent infinite loading
@@ -32,7 +41,7 @@ export default function useMyRole(chamaId) {
       })
       
     return () => clearTimeout(timeout)
-  }, [chamaId])
+  }, [chamaId, user?.isSuperAdmin])
 
   return {
     role,

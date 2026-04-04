@@ -61,13 +61,16 @@ const getChamaById = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid chamaId' });
     }
 
-    const membership = await Membership.findOne({
-      userId: req.user.userId,
-      chamaId,
-      status: 'active'
-    });
-    if (!membership) {
-      return res.status(403).json({ success: false, message: 'Not a member of this chama' });
+    // Super admins can view any chama
+    if (!req.user.isSuperAdmin) {
+      const membership = await Membership.findOne({
+        userId: req.user.userId,
+        chamaId,
+        status: 'active'
+      });
+      if (!membership) {
+        return res.status(403).json({ success: false, message: 'Not a member of this chama' });
+      }
     }
 
     const chama = await Chama.findById(chamaId).populate('createdBy', 'fullName email');
@@ -181,13 +184,16 @@ const getMembers = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid chamaId' });
     }
 
-    const membership = await Membership.findOne({
-      userId: req.user.userId,
-      chamaId,
-      status: 'active'
-    });
-    if (!membership) {
-      return res.status(403).json({ success: false, message: 'Not a member of this chama' });
+    // Super admins can view members of any chama
+    if (!req.user.isSuperAdmin) {
+      const membership = await Membership.findOne({
+        userId: req.user.userId,
+        chamaId,
+        status: 'active'
+      });
+      if (!membership) {
+        return res.status(403).json({ success: false, message: 'Not a member of this chama' });
+      }
     }
 
     const members = await Membership.find({

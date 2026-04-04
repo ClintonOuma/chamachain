@@ -353,13 +353,13 @@ function ContributionsTab({ contributions, chamaId, onContribute, canContribute,
   )
 }
 
-function LoansTab({ loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances }) {
+function LoansTab({ loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances, onRequestLoan }) {
   const displayLoans = canViewFinances ? loans : myLoans
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-        {canRequestLoan && <button style={BTN_PRIMARY}><Plus size={16} />Request Loan</button>}
+        {canRequestLoan && <button style={BTN_PRIMARY} onClick={onRequestLoan}><Plus size={16} />Request Loan</button>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {displayLoans.length === 0 ? (
@@ -542,6 +542,7 @@ export default function ChamaDetailPage() {
   const [error, setError] = useState(null)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [isFundAccountModalOpen, setIsFundAccountModalOpen] = useState(false)
+  const [isRequestLoanModalOpen, setIsRequestLoanModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
 
   // Add timeout to prevent infinite loading
@@ -562,7 +563,7 @@ export default function ChamaDetailPage() {
     { name: 'Overview', icon: LayoutDashboard, component: OverviewTab, props: { chama, members, chamaId } },
     { name: 'Members', icon: Users, component: MembersTab, props: { members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan, chama } },
     { name: 'Contributions', icon: Wallet, component: ContributionsTab, props: { contributions, chamaId, onContribute: () => setIsFundAccountModalOpen(true), canContribute, canViewFinances } },
-    { name: 'Loans', icon: CreditCard, component: LoansTab, props: { loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances } },
+    { name: 'Loans', icon: CreditCard, component: LoansTab, props: { loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances, onRequestLoan: () => setIsRequestLoanModalOpen(true) } },
     { name: 'Settings', icon: Settings, component: SettingsTab, props: { chama, chamaId, isAdmin, members } },
   ];
 
