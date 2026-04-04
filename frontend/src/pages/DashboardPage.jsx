@@ -338,55 +338,19 @@ export default function DashboardPage() {
 
   const creditScore = 'N/A'
 
-  // Stats with accent colors matching Apple's vibrant palette
+  // Stats - clean design without glow
   const statsData = [
-    {
-      label: 'Total Savings',
-      val: totalSavings,
-      pre: 'KES ',
-      icon: TrendingUp,
-      accentColor: '#32d74b',
-      glowColor: 'rgba(50,215,75,0.15)',
-      borderColor: 'rgba(50,215,75,0.25)',
-      iconBg: 'rgba(50,215,75,0.12)',
-    },
-    {
-      label: 'Active Loans',
-      val: activeLoansCount,
-      pre: '',
-      icon: CreditCard,
-      accentColor: '#4ac3ff',
-      glowColor: 'rgba(74,195,255,0.15)',
-      borderColor: 'rgba(74,195,255,0.25)',
-      iconBg: 'rgba(74,195,255,0.12)',
-    },
-    {
-      label: 'My Chamas',
-      val: chamas.length,
-      pre: '',
-      icon: Users,
-      accentColor: '#5e5ce6',
-      glowColor: 'rgba(94,92,230,0.15)',
-      borderColor: 'rgba(94,92,230,0.25)',
-      iconBg: 'rgba(94,92,230,0.12)',
-    },
-    {
-      label: 'Credit Score',
-      val: creditScore,
-      pre: '',
-      icon: Star,
-      accentColor: '#ffd60a',
-      glowColor: 'rgba(255,214,10,0.12)',
-      borderColor: 'rgba(255,214,10,0.25)',
-      iconBg: 'rgba(255,214,10,0.10)',
-    },
+    { label: 'Total Savings', val: totalSavings, pre: 'KES ', icon: TrendingUp, accentColor: '#32d74b' },
+    { label: 'Active Loans', val: activeLoansCount, pre: '', icon: CreditCard, accentColor: '#4ac3ff' },
+    { label: 'My Chamas', val: chamas.length, pre: '', icon: Users, accentColor: '#5e5ce6' },
+    { label: 'Credit Score', val: creditScore, pre: '', icon: Star, accentColor: '#ffd60a' },
   ]
 
   const quickActions = [
-    { label: 'Contribute', icon: Wallet, accentColor: '#32d74b', glowColor: 'rgba(50,215,75,0.20)', action: () => setShowContribute(true) },
-    { label: 'Request Loan', icon: CreditCard, accentColor: '#4ac3ff', glowColor: 'rgba(74,195,255,0.20)', action: () => alert('Loans coming soon') },
-    { label: 'Invite Member', icon: Users, accentColor: '#5e5ce6', glowColor: 'rgba(94,92,230,0.20)', action: () => alert('Invites coming soon') },
-    { label: 'View Reports', icon: TrendingUp, accentColor: '#ffd60a', glowColor: 'rgba(255,214,10,0.15)', action: () => alert('Reports coming soon') },
+    { label: 'Contribute', icon: Wallet, accentColor: '#32d74b', action: () => setShowContribute(true) },
+    { label: 'Request Loan', icon: CreditCard, accentColor: '#4ac3ff', action: () => alert('Loans coming soon') },
+    { label: 'Invite Member', icon: Users, accentColor: '#5e5ce6', action: () => alert('Invites coming soon') },
+    { label: 'View Reports', icon: TrendingUp, accentColor: '#ffd60a', action: () => alert('Reports coming soon') },
   ]
 
   return (
