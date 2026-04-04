@@ -353,7 +353,7 @@ function ContributionsTab({ contributions, chamaId, onContribute, canContribute,
   )
 }
 
-function LoansTab({ loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances, onRequestLoan }) {
+function LoansTab({ loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances, onRequestLoan, onRepayLoan }) {
   const displayLoans = canViewFinances ? loans : myLoans
 
   return (
@@ -386,6 +386,16 @@ function LoansTab({ loans, myLoans, membership, chamaId, canRequestLoan, canAppr
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <p style={{ margin: 0, fontFamily: 'Syne', color: '#0EA5E9', fontWeight: 700 }}>KES {loan.amount.toLocaleString()}</p>
+              <p style={{ margin: 0, fontFamily: 'Syne', color: '#10B981', fontWeight: 700 }}>Paid: KES {(loan.amountPaid || 0).toLocaleString()}</p>
+              <p style={{ margin: 0, fontFamily: 'Syne', color: '#EF4444', fontWeight: 700 }}>Due: KES {(loan.amount - (loan.amountPaid || 0)).toLocaleString()}</p>
+
+              {loan.status === 'approved' && loan.amount - (loan.amountPaid || 0) > 0 && loan.userId?._id === membership?.userId?._id && (
+                <button
+                  onClick={() => onRepayLoan(loan._id)}
+                  style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer' }}
+                >Repay</button>
+              )}
+
               {canApproveLoan && loan.status === 'pending' && (
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
@@ -526,6 +536,128 @@ function SettingsTab({ chama, chamaId, isAdmin, members }) {
   )
 }
 
+function RequestLoanModal({ chamaId, onClose }) {
+  const [amount, setAmount] = useState('')
+  const [reason, setReason] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    try {
+      await api.post(`/loans/${chamaId}/request`, { amount: parseFloat(amount), reason })
+      alert('Loan request submitted successfully!')
+      onClose()
+      window.location.reload()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to request loan.')
+      console.error('Loan request error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="glass-card"
+        style={{ width: '400px', padding: '36px' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <h3 style={{ fontFamily: "'Syne',sans-serif", fontSize: '22px', color: '#F8FAFC', fontWeight: 700 }}>Request Loan</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <FloatingInput
+            label="Amount (KES)"
+            type="number"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            error={error?.includes('Amount') ? error : null}
+          />
+          <FloatingInput
+            label="Reason for Loan"
+            type="text"
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            error={error?.includes('Reason') ? error : null}
+          />
+
+          {error && <p style={{ color: '#EF4444', fontSize: '13px', marginBottom: '16px' }}>{error}</p>}
+
+          <button type="submit" style={BTN_PRIMARY} disabled={loading}>
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+            {loading ? 'Submitting...' : 'Submit Request'}
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  )
+}
+
+function RepayLoanModal({ chamaId, loanId, onClose }) {
+  const [amount, setAmount] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    try {
+      await api.patch(`/loans/${chamaId}/${loanId}/repay`, { amount: parseFloat(amount) })
+      alert('Loan repaid successfully!')
+      onClose()
+      window.location.reload()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to repay loan.')
+      console.error('Loan repayment error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="glass-card"
+        style={{ width: '400px', padding: '36px' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <h3 style={{ fontFamily: "'Syne',sans-serif", fontSize: '22px', color: '#F8FAFC', fontWeight: 700 }}>Repay Loan</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <FloatingInput
+            label="Amount (KES)"
+            type="number"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            error={error?.includes('Amount') ? error : null}
+          />
+
+          {error && <p style={{ color: '#EF4444', fontSize: '13px', marginBottom: '16px' }}>{error}</p>}
+
+          <button type="submit" style={BTN_PRIMARY} disabled={loading}>
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <DollarSign size={16} />}
+            {loading ? 'Processing...' : 'Submit Repayment'}
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  )
+}
+
 
 export default function ChamaDetailPage() {
   const { chamaId } = useParams()
@@ -543,6 +675,8 @@ export default function ChamaDetailPage() {
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [isFundAccountModalOpen, setIsFundAccountModalOpen] = useState(false)
   const [isRequestLoanModalOpen, setIsRequestLoanModalOpen] = useState(false)
+  const [isRepayLoanModalOpen, setIsRepayLoanModalOpen] = useState(false)
+  const [selectedLoanId, setSelectedLoanId] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
 
   // Add timeout to prevent infinite loading
@@ -563,7 +697,7 @@ export default function ChamaDetailPage() {
     { name: 'Overview', icon: LayoutDashboard, component: OverviewTab, props: { chama, members, chamaId } },
     { name: 'Members', icon: Users, component: MembersTab, props: { members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan, chama } },
     { name: 'Contributions', icon: Wallet, component: ContributionsTab, props: { contributions, chamaId, onContribute: () => setIsFundAccountModalOpen(true), canContribute, canViewFinances } },
-    { name: 'Loans', icon: CreditCard, component: LoansTab, props: { loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances, onRequestLoan: () => setIsRequestLoanModalOpen(true) } },
+    { name: 'Loans', icon: CreditCard, component: LoansTab, props: { loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances, onRequestLoan: () => setIsRequestLoanModalOpen(true), onRepayLoan: (loanId) => { setSelectedLoanId(loanId); setIsRepayLoanModalOpen(true) } } },
     { name: 'Settings', icon: Settings, component: SettingsTab, props: { chama, chamaId, isAdmin, members } },
   ];
 
@@ -740,6 +874,26 @@ export default function ChamaDetailPage() {
             ))}
           </motion.div>
         </AnimatePresence>
+
+        {isLeaveModalOpen && (
+          <LeaveChamaModal chamaId={chamaId} onClose={() => setIsLeaveModalOpen(false)} />
+        )}
+
+        {isFundAccountModalOpen && (
+          <FundAccountModal chamaId={chamaId} onClose={() => setIsFundAccountModalOpen(false)} />
+        )}
+
+        {isRequestLoanModalOpen && (
+          <RequestLoanModal chamaId={chamaId} onClose={() => setIsRequestLoanModalOpen(false)} />
+        )}
+
+        {isRepayLoanModalOpen && (
+          <RepayLoanModal chamaId={chamaId} loanId={selectedLoanId} onClose={() => {
+            setIsRepayLoanModalOpen(false)
+            setSelectedLoanId(null)
+          }} />
+        )}
+
       </main>
     </div>
   )
