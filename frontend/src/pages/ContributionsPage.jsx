@@ -164,7 +164,7 @@ import { useState, useEffect } from 'react'
              <> 
                {/* Table header */} 
                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr 1fr 0.8fr', gap: '0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}> 
-                 {'Chama', 'Amount', 'M-Pesa Ref', 'Date', 'Status'].map(h => ( 
+                 {['Chama', 'Amount', 'M-Pesa Ref', 'Date', 'Status'].map(h => ( 
                    <div key={h} style={{ padding: '14px 20px', fontFamily: 'DM Sans', fontSize: '11px', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{h}</div> 
                  ))} 
                </div> 
