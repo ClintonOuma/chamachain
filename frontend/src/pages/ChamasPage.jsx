@@ -205,7 +205,7 @@ import { useState, useEffect } from 'react'
            <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Description (optional)</label> 
            <input placeholder="What is this chama for?" value={description} onChange={e => setDescription(e.target.value)} /> 
          </div> 
-         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px'> 
+         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px'}}> 
            <div> 
              <label style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', display: 'block', marginBottom: '8px' }}>Min Contribution (KES)</label> 
              <input type="number" value={minContribution} onChange={e => setMinContribution(e.target.value)} min="100" /> 
