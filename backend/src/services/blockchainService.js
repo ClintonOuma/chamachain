@@ -1,67 +1,162 @@
-const { ethers } = require('ethers');
-const dotenv = require('dotenv');
 
-dotenv.config();
+const crypto = require('crypto')
+const mongoose = require('mongoose')
 
-const contractAddress = process.env.CONTRACT_ADDRESS;
-const rpcUrl = process.env.POLYGON_RPC_URL;
-const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
+// Simple hash chain schema
+const hashRecordSchema = new mongoose.Schema({
+  recordType: { type: String, required: true }, // 'vote_created', 'vote_cast', 'vote_finalized'
+  loanId: { type: String, required: true },
+  data: { type: Object, required: true },
+  hash: { type: String, required: true },
+  previousHash: { type: String, default: '0000000000000000' },
+  timestamp: { type: Date, default: Date.now }
+}, { timestamps: true })
 
-const abi = [
-  "function createVote(bytes32 loanId, uint256 threshold) external",
-  "function castVote(bytes32 loanId, bool support) external",
-  "function finalizeVote(bytes32 loanId) external",
-  "function getVote(bytes32 loanId) external view returns (uint256 yes, uint256 no, uint256 threshold, bool finalized, bool approved)",
-  "event VoteCreated(bytes32 indexed loanId, uint256 threshold)",
-  "event VoteCast(bytes32 indexed loanId, address voter, bool support)",
-  "event VoteFinalized(bytes32 indexed loanId, bool approved)"
-];
+const HashRecord = mongoose.models.HashRecord || mongoose.model('HashRecord', hashRecordSchema)
 
-let provider;
-let wallet;
-let contract;
-
-if (rpcUrl && privateKey && contractAddress) {
-  provider = new ethers.JsonRpcProvider(rpcUrl);
-  wallet = new ethers.Wallet(privateKey, provider);
-  contract = new ethers.Contract(contractAddress, abi, wallet);
+// Generate SHA-256 hash from data
+const generateHash = (data, previousHash) => {
+  const content = JSON.stringify(data) + previousHash + Date.now().toString()
+  return crypto.createHash('sha256').update(content).digest('hex')
 }
 
-const createLoanVote = async (loanId, threshold) => {
-  if (!contract) {
-    console.warn('Blockchain contract not configured. Skipping on-chain vote creation.');
-    return null;
+// Get last hash in chain
+const getLastHash = async (loanId) => {
+  const last = await HashRecord.findOne({ loanId }).sort({ createdAt: -1 })
+  return last ? last.hash : '0000000000000000'
+}
+
+// Create vote record on chain
+const createLoanVote = async (loanId, threshold = 51) => {
+  try {
+    const previousHash = await getLastHash(loanId)
+    const data = { loanId, threshold, action: 'vote_created', timestamp: new Date() }
+    const hash = generateHash(data, previousHash)
+
+    await HashRecord.create({
+      recordType: 'vote_created',
+      loanId: loanId.toString(),
+      data,
+      hash,
+      previousHash
+    })
+
+    console.log(`[chain] Vote created for loan ${loanId}. Hash: ${hash.slice(0, 16)}...`)
+    return hash
+  } catch (err) {
+    console.error('[chain] createLoanVote error:', err.message)
+    return null
   }
-  const bytes32LoanId = ethers.id(loanId.toString());
-  const tx = await contract.createVote(bytes32LoanId, threshold);
-  return await tx.wait();
-};
+}
 
-const castLoanVote = async (loanId, support) => {
-  if (!contract) {
-    console.warn('Blockchain contract not configured. Skipping on-chain vote.');
-    return null;
+// Cast vote on chain
+const castLoanVote = async (loanId, voterId, support) => {
+  try {
+    const previousHash = await getLastHash(loanId)
+    const data = {
+      loanId,
+      voterId: voterId.toString(),
+      support,
+      action: 'vote_cast',
+      timestamp: new Date()
+    }
+    const hash = generateHash(data, previousHash)
+
+    await HashRecord.create({
+      recordType: 'vote_cast',
+      loanId: loanId.toString(),
+      data,
+      hash,
+      previousHash
+    })
+
+    console.log(`[chain] Vote cast for loan ${loanId}. Hash: ${hash.slice(0, 16)}...`)
+    return hash
+  } catch (err) {
+    console.error('[chain] castLoanVote error:', err.message)
+    return null
   }
-  const bytes32LoanId = ethers.id(loanId.toString());
-  const tx = await contract.castVote(bytes32LoanId, support);
-  return await tx.wait();
-};
+}
 
-const getLoanVoteStatus = async (loanId) => {
-  if (!contract) return null;
-  const bytes32LoanId = ethers.id(loanId.toString());
-  const result = await contract.getVote(bytes32LoanId);
-  return {
-    yes: result[0].toString(),
-    no: result[1].toString(),
-    threshold: result[2].toString(),
-    finalized: result[3],
-    approved: result[4]
-  };
-};
+// Finalize vote on chain
+const finalizeLoanVote = async (loanId, approved, yesVotes, noVotes) => {
+  try {
+    const previousHash = await getLastHash(loanId)
+    const data = {
+      loanId,
+      approved,
+      yesVotes,
+      noVotes,
+      action: 'vote_finalized',
+      timestamp: new Date()
+    }
+    const hash = generateHash(data, previousHash)
 
-module.exports = {
-  createLoanVote,
-  castLoanVote,
-  getLoanVoteStatus
-};
+    await HashRecord.create({
+      recordType: 'vote_finalized',
+      loanId: loanId.toString(),
+      data,
+      hash,
+      previousHash
+    })
+
+    console.log(`[chain] Vote finalized for loan ${loanId}. Approved: ${approved}. Hash: ${hash.slice(0, 16)}...`)
+    return { hash, approved }
+  } catch (err) {
+    console.error('[chain] finalizeLoanVote error:', err.message)
+    return null
+  }
+}
+
+// Get full chain for a loan (audit trail)
+const getLoanVote = async (loanId) => {
+  try {
+    const records = await HashRecord.find({ loanId: loanId.toString() }).sort({ createdAt: 1 })
+    if (records.length === 0) return null
+
+    const voteRecord = records.find(r => r.recordType === 'vote_created')
+    const castRecords = records.filter(r => r.recordType === 'vote_cast')
+    const finalRecord = records.find(r => r.recordType === 'vote_finalized')
+
+    const yesVotes = castRecords.filter(r => r.data.support).length
+    const noVotes = castRecords.filter(r => !r.data.support).length
+
+    return {
+      yesVotes,
+      noVotes,
+      threshold: voteRecord?.data?.threshold || 51,
+      finalized: !!finalRecord,
+      approved: finalRecord?.data?.approved || false,
+      chainHash: records[records.length - 1]?.hash,
+      chainLength: records.length,
+      auditTrail: records.map(r => ({
+        type: r.recordType,
+        hash: r.hash,
+        previousHash: r.previousHash,
+        timestamp: r.timestamp
+      }))
+    }
+  } catch (err) {
+    console.error('[chain] getLoanVote error:', err.message)
+    return null
+  }
+}
+
+// Verify chain integrity
+const verifyChain = async (loanId) => {
+  try {
+    const records = await HashRecord.find({ loanId: loanId.toString() }).sort({ createdAt: 1 })
+    let isValid = true
+    for (let i = 1; i < records.length; i++) {
+      if (records[i].previousHash !== records[i - 1].hash) {
+        isValid = false
+        break
+      }
+    }
+    return isValid
+  } catch (err) {
+    return false
+  }
+}
+
+module.exports = { createLoanVote, castLoanVote, finalizeLoanVote, getLoanVote, verifyChain }

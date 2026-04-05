@@ -15,6 +15,7 @@ import useAuthStore from '../store/authStore'
 import usePageTitle from '../hooks/usePageTitle'
 import useMyRole from '../hooks/useMyRole'
 
+
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
 const CARD = {
@@ -96,6 +97,8 @@ function OverviewTab({ chama, members, chamaId }) {
     }
     if (chamaId) fetchLeaderboard()
   }, [chamaId])
+
+
 
   const topContributors = [...members].sort((a, b) => (b.totalContributed || 0) - (a.totalContributed || 0)).slice(0, 5)
   const rankColors = ['#F59E0B', '#94A3B8', '#CD7C2F', '#64748B', '#64748B']
@@ -538,6 +541,228 @@ function SettingsTab({ chama, chamaId, isAdmin, members }) {
   )
 }
 
+function VotesTab({ chama, chamaId, pendingLoans, setPendingLoans, voteStatuses, setVoteStatuses, isAdmin, membership, canApproveLoan }) {
+
+  const [auditTrail, setAuditTrail] = useState(null)
+  const [showAudit, setShowAudit] = useState(false)
+
+  const handleVerifyChain = async (loanId) => {
+    try {
+      const res = await api.get(`/votes/${chamaId}/verify/${loanId}`)
+      setAuditTrail(res.data)
+      setShowAudit(true)
+    } catch (err) {
+      alert('Could not verify chain')
+    }
+  }
+
+  const handleVote = async (loan, support) => {
+    try {
+      const res = await api.post(`/votes/${chamaId}/vote/${loan._id}`, { support })
+      setVoteStatuses(prev => ({
+        ...prev,
+        [loan._id]: {
+          ...prev[loan._id],
+          hasVoted: true,
+          yesVotes: res.data.yesVotes,
+          noVotes: res.data.noVotes,
+          totalVotes: res.data.totalVotes,
+          loanStatus: res.data.loanStatus
+        }
+      }))
+      if (res.data.loanStatus !== 'pending') {
+        setPendingLoans(prev => prev.filter(l => l._id !== loan._id))
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Vote failed')
+    }
+  }
+
+  const handleStartVote = async (loan) => {
+    try {
+      await api.post(`/votes/${chamaId}/create/${loan._id}`)
+      alert('Voting started! Members have been notified.')
+      // No need to reload, the voteStatus fetch in ChamaDetailPage will update
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to start vote')
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h3 style={{ fontFamily: 'Syne', fontSize: '20px', color: '#F8FAFC', margin: 0 }}>🗳️ Loan Votes</h3>
+        <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B', margin: 0 }}>
+          Members vote on loan requests. Threshold: {chama?.settings?.loanVoteThreshold || 51}% approval needed.
+        </p>
+      </div>
+
+      {pendingLoans.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 0' }}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🗳️</div>
+          <p style={{ fontFamily: 'Syne', color: '#F8FAFC', fontSize: '18px' }}>No Active Votes</p>
+          <p style={{ color: '#64748B', fontFamily: 'DM Sans' }}>Loan requests will appear here for member voting</p>
+        </div>
+      ) : (
+        pendingLoans.map((loan, i) => {
+          const voteStatus = voteStatuses[loan._id] || {}
+          const yesVotes = voteStatus.yesVotes || 0
+          const noVotes = voteStatus.noVotes || 0
+          const totalVotes = yesVotes + noVotes
+          const yesPercent = totalVotes > 0 ? Math.round((yesVotes / totalVotes) * 100) : 0
+          const hasVoted = voteStatus.hasVoted || false
+          const threshold = chama?.settings?.loanVoteThreshold || 51
+          const requester = loan.userId
+          const initials = requester?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'
+          const riskColors = { low: '#10B981', medium: '#F59E0B', high: '#EF4444', very_high: '#7F1D1D' }
+
+          return (
+            <motion.div key={i} className="glass-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} style={{ padding: '24px', marginBottom: '16px' }}>
+
+              {/* Loan info header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne', fontWeight: 700, color: 'white', fontSize: '16px' }}>
+                    {initials}
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', fontWeight: 700 }}>KES {loan.amount?.toLocaleString()}</p>
+                    <p style={{ margin: '2px 0 0', fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8' }}>
+                      {requester?.fullName} · {loan.purpose} · {loan.repaymentMonths} months
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ background: `${riskColors[loan.riskLabel]}22`, color: riskColors[loan.riskLabel], padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontFamily: 'DM Sans', fontWeight: 600 }}>
+                    Score: {loan.creditScore} · {loan.riskLabel} risk
+                  </span>
+                  {loan.blockchainVoteId && (
+                    <span style={{ background: 'rgba(139,92,246,0.15)', color: '#8B5CF6', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontFamily: 'DM Sans' }}>
+                      ⛓️ On-chain
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Vote tally */}
+              {totalVotes > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#10B981' }}>✅ Yes: {yesVotes} votes ({yesPercent}%)</span>
+                    <span style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#EF4444' }}>❌ No: {noVotes} votes</span>
+                  </div>
+                  <div style={{ height: '10px', borderRadius: '5px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden', display: 'flex' }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${yesPercent}%` }}
+                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                      style={{ height: '100%', background: 'linear-gradient(90deg, #10B981, #0EA5E9)', borderRadius: '5px' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+                    <span style={{ fontFamily: 'DM Sans', fontSize: '11px', color: '#64748B' }}>{totalVotes} total votes</span>
+                    <span style={{ fontFamily: 'DM Sans', fontSize: '11px', color: yesPercent >= threshold ? '#10B981' : '#F59E0B' }}>
+                      {yesPercent >= threshold ? '✅ Threshold met' : `Needs ${threshold}% to approve`}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              {isAdmin && !loan.blockchainVoteId && (
+                <button onClick={() => handleStartVote(loan)} className="btn-primary" style={{ width: '100%', marginBottom: '12px' }}>
+                  🗳️ Start Community Vote
+                </button>
+              )}
+
+              {loan.blockchainVoteId && !hasVoted && membership?.role !== 'observer' && (
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => handleVote(loan, true)}
+                    style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)', cursor: 'pointer', fontFamily: 'DM Sans', fontWeight: 700, fontSize: '15px' }}>
+                    ✅ Vote Yes
+                  </button>
+                  <button
+                    onClick={() => handleVote(loan, false)}
+                    style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer', fontFamily: 'DM Sans', fontWeight: 700, fontSize: '15px' }}>
+                    ❌ Vote No
+                  </button>
+                </div>
+              )}
+
+              {hasVoted && (
+                <div style={{ textAlign: 'center', padding: '12px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px' }}>
+                  <p style={{ margin: 0, fontFamily: 'DM Sans', color: '#64748B', fontSize: '13px' }}>✓ You have already voted on this loan</p>
+                  {loan.blockchainVoteId && (
+                <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(139,92,246,0.08)', borderRadius: '10px', border: '1px solid rgba(139,92,246,0.2)' }}>
+                  <p style={{ margin: 0, fontFamily: 'DM Sans', fontSize: '11px', color: '#8B5CF6' }}>
+                    🔐 Cryptographic Hash: <span style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>{loan.blockchainVoteId}</span>
+                  </p>
+                </div>
+              )}
+
+              {loan.blockchainVoteId && (
+                <button
+                  onClick={() => handleVerifyChain(loan._id)}
+                  style={{ marginTop: '8px', padding: '6px 14px', borderRadius: '8px', background: 'rgba(139,92,246,0.1)', color: '#8B5CF6', border: '1px solid rgba(139,92,246,0.2)', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: '12px', width: '100%' }}>
+                  🔍 Verify Chain Integrity
+                </button>
+              )}
+                </div>
+              )}
+
+              {!loan.blockchainVoteId && !isAdmin && (
+                <div style={{ textAlign: 'center', padding: '12px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px' }}>
+                  <p style={{ margin: 0, fontFamily: 'DM Sans', color: '#64748B', fontSize: '13px' }}>⏳ Waiting for admin to start the vote</p>
+                </div>
+              )}
+            </motion.div>
+          )
+        })
+      )}
+
+      {/* Audit trail modal: */}
+      {showAudit && auditTrail && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card"
+            style={{ width: '560px', padding: '36px', maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontFamily: 'Syne', fontSize: '20px', color: '#F8FAFC', margin: 0 }}>🔐 Audit Trail</h3>
+              <button onClick={() => setShowAudit(false)} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontSize: '20px' }}>✕</button>
+            </div>
+
+            <div style={{ background: auditTrail.isValid ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${auditTrail.isValid ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`, borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+              <p style={{ margin: 0, fontFamily: 'DM Sans', fontWeight: 600, color: auditTrail.isValid ? '#10B981' : '#EF4444' }}>
+                Chain Integrity: {auditTrail.chainIntegrity}
+              </p>
+              <p style={{ margin: '4px 0 0', fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8' }}>
+                {auditTrail.chainLength} records in chain
+              </p>
+            </div>
+
+            {(auditTrail.auditTrail || []).map((record, i) => (
+              <div key={i} style={{ padding: '14px', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', marginBottom: '8px', borderLeft: '3px solid #8B5CF6' }}>
+                <p style={{ margin: '0 0 4px', fontFamily: 'DM Sans', fontSize: '13px', color: '#F8FAFC', fontWeight: 600, textTransform: 'capitalize' }}>
+                  {i + 1}. {record.type.replace(/_/g, ' ')}
+                </p>
+                <p style={{ margin: '0 0 2px', fontFamily: 'monospace', fontSize: '11px', color: '#8B5CF6', wordBreak: 'break-all' }}>
+                  Hash: {record.hash}
+                </p>
+                <p style={{ margin: '0 0 2px', fontFamily: 'monospace', fontSize: '11px', color: '#475569', wordBreak: 'break-all' }}>
+                  Prev: {record.previousHash}
+                </p>
+                <p style={{ margin: 0, fontFamily: 'DM Sans', fontSize: '11px', color: '#64748B' }}>
+                  {new Date(record.timestamp).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 
 
@@ -562,6 +787,8 @@ export default function ChamaDetailPage() {
   const [isRepayLoanModalOpen, setIsRepayLoanModalOpen] = useState(false)
   const [selectedLoanId, setSelectedLoanId] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
+  const [pendingLoans, setPendingLoans] = useState([])
+  const [voteStatuses, setVoteStatuses] = useState({})
 
   // Add timeout to prevent infinite loading
   useEffect(() => {
@@ -574,6 +801,29 @@ export default function ChamaDetailPage() {
 
     return () => clearTimeout(timer)
   }, [loading])
+
+  // Fetch pending loans for voting 
+  useEffect(() => {
+    const fetchPendingLoans = async () => {
+      try {
+        const pendingRes = await api.get(`/votes/${chamaId}/pending`)
+        setPendingLoans(pendingRes.data.loans || [])
+
+        // Fetch vote status for each loan
+        const statuses = {}
+        for (const loan of pendingRes.data.loans || []) {
+          try {
+            const statusRes = await api.get(`/votes/${chamaId}/status/${loan._id}`)
+            statuses[loan._id] = statusRes.data
+          } catch (e) {}
+        }
+        setVoteStatuses(statuses)
+      } catch (e) {
+        console.error('Error fetching pending loans or vote statuses:', e)
+      }
+    }
+    if (chamaId) fetchPendingLoans()
+  }, [chamaId, setPendingLoans, setVoteStatuses])
 
   const membership = members?.find(m => m.userId?._id === user?.id)
 

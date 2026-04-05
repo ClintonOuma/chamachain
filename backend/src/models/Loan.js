@@ -15,6 +15,13 @@ const loanSchema = new mongoose.Schema({
   disbursedAt: { type: Date, default: null },
   dueDate: { type: Date, default: null },
   mpesaDisbursementRef: { type: String, default: '' },
+  votes: [{
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    support: { type: Boolean },
+    txHash: { type: String },
+    votedAt: { type: Date, default: Date.now }
+  }],
+  blockchainVoteId: { type: String, default: '' },
   repayments: [{
     amount: { type: Number },
     date: { type: Date },

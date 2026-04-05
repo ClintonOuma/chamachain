@@ -75,6 +75,9 @@ app.use('/api/v1/notifications', notificationRoutes);
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/v1/users', userRoutes);
 
+const voteRoutes = require('./routes/voteRoutes');
+app.use('/api/v1/votes', voteRoutes);
+
 const aiRoutes = require('./routes/aiRoutes');
 app.use('/api/v1/ai', aiRoutes);
 

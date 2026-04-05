@@ -1,68 +1,78 @@
-// SPDX-License-Identifier: MIT
+solidity// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 contract ChamaVoting {
+
     struct LoanVote {
-        bytes32 loanId;       // MongoDB loan _id as bytes32
+        string loanId;
         uint256 yesVotes;
         uint256 noVotes;
-        uint256 threshold;    // votes needed for approval
+        uint256 threshold;
         bool finalized;
         bool approved;
+        mapping(address => bool) hasVoted;
+        mapping(address => bool) votedYes;
     }
 
-    mapping(bytes32 => LoanVote) public votes;
-    mapping(bytes32 => mapping(address => bool)) public hasVoted;
+    mapping(string => LoanVote) public votes;
+    string[] public voteIds;
 
-    event VoteCreated(bytes32 indexed loanId, uint256 threshold);
-    event VoteCast(bytes32 indexed loanId, address voter, bool support);
-    event VoteFinalized(bytes32 indexed loanId, bool approved);
+    event VoteCreated(string indexed loanId, uint256 threshold);
+    event VoteCast(string indexed loanId, address indexed voter, bool support);
+    event VoteFinalized(string indexed loanId, bool approved);
 
-    function createVote(bytes32 _loanId, uint256 _threshold) external {
-        require(votes[_loanId].loanId == 0, "Vote already exists");
-        votes[_loanId].loanId = _loanId;
-        votes[_loanId].threshold = _threshold;
-        votes[_loanId].finalized = false;
-        
-        emit VoteCreated(_loanId, _threshold);
+    function createVote(string memory loanId, uint256 threshold) external {
+        require(bytes(votes[loanId].loanId).length == 0, "Vote already exists");
+        LoanVote storage vote = votes[loanId];
+        vote.loanId = loanId;
+        vote.threshold = threshold;
+        vote.finalized = false;
+        voteIds.push(loanId);
+        emit VoteCreated(loanId, threshold);
     }
 
-    function castVote(bytes32 _loanId, bool _support) external {
-        LoanVote storage v = votes[_loanId];
-        require(v.loanId != 0, "Vote does not exist");
-        require(!v.finalized, "Vote already finalized");
-        require(!hasVoted[_loanId][msg.sender], "Already voted");
-
-        hasVoted[_loanId][msg.sender] = true;
-        if (_support) {
-            v.yesVotes++;
+    function castVote(string memory loanId, bool support) external {
+        LoanVote storage vote = votes[loanId];
+        require(bytes(vote.loanId).length > 0, "Vote does not exist");
+        require(!vote.finalized, "Vote already finalized");
+        require(!vote.hasVoted[msg.sender], "Already voted");
+        vote.hasVoted[msg.sender] = true;
+        vote.votedYes[msg.sender] = support;
+        if (support) {
+            vote.yesVotes++;
         } else {
-            v.noVotes++;
+            vote.noVotes++;
         }
-
-        emit VoteCast(_loanId, msg.sender, _support);
-
-        // Auto-finalize if threshold met
-        if (v.yesVotes >= v.threshold) {
-            v.finalized = true;
-            v.approved = true;
-            emit VoteFinalized(_loanId, true);
-        }
+        emit VoteCast(loanId, msg.sender, support);
     }
 
-    function finalizeVote(bytes32 _loanId) external {
-        LoanVote storage v = votes[_loanId];
-        require(v.loanId != 0, "Vote does not exist");
-        require(!v.finalized, "Vote already finalized");
-
-        v.finalized = true;
-        v.approved = (v.yesVotes >= v.threshold);
-        
-        emit VoteFinalized(_loanId, v.approved);
+    function finalizeVote(string memory loanId) external {
+        LoanVote storage vote = votes[loanId];
+        require(bytes(vote.loanId).length > 0, "Vote does not exist");
+        require(!vote.finalized, "Already finalized");
+        uint256 total = vote.yesVotes + vote.noVotes;
+        require(total > 0, "No votes cast");
+        vote.finalized = true;
+        vote.approved = (vote.yesVotes * 100 / total) >= vote.threshold;
+        emit VoteFinalized(loanId, vote.approved);
     }
 
-    function getVote(bytes32 _loanId) external view returns (uint256 yes, uint256 no, uint256 threshold, bool finalized, bool approved) {
-        LoanVote storage v = votes[_loanId];
-        return (v.yesVotes, v.noVotes, v.threshold, v.finalized, v.approved);
+    function getVote(string memory loanId) external view returns (
+        uint256 yesVotes,
+        uint256 noVotes,
+        uint256 threshold,
+        bool finalized,
+        bool approved
+    ) {
+        LoanVote storage vote = votes[loanId];
+        return (vote.yesVotes, vote.noVotes, vote.threshold, vote.finalized, vote.approved);
+    }
+
+    function hasVoted(string memory loanId, address voter) external view returns (bool) {
+        return votes[loanId].hasVoted[voter];
+    }
+
+    function getVoteCount() external view returns (uint256) {
+        return voteIds.length;
     }
 }
