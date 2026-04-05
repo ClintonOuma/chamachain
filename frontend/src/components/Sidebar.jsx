@@ -5,6 +5,7 @@ import {
   Landmark, Bot, Bell, Settings, LogOut, ChevronRight, User, Shield
 } from 'lucide-react'
 import useAuthStore from '../store/authStore'
+import NotificationBell from './NotificationBell'
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -16,7 +17,7 @@ const navItems = [
   { id: 'settings', label: 'Settings', icon: Settings, path: '/profile' },
 ]
 
-export default function Sidebar({ unreadCount = 0 }) {
+export default function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuthStore()
@@ -58,7 +59,7 @@ export default function Sidebar({ unreadCount = 0 }) {
       }}
     >
       {/* Logo */}
-      <div style={{ padding: '0 24px 36px' }}>
+      <div style={{ padding: '0 24px 36px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <motion.div
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -92,6 +93,7 @@ export default function Sidebar({ unreadCount = 0 }) {
             ChamaChain
           </span>
         </motion.div>
+        <NotificationBell />
       </div>
 
       {/* Nav Items */}
@@ -168,23 +170,7 @@ export default function Sidebar({ unreadCount = 0 }) {
                 {item.label}
               </span>
 
-              {/* Notification badge */}
-              {item.id === 'notifications' && unreadCount > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  right: '12px',
-                  background: 'linear-gradient(135deg, #ff453a, #ff6b6b)',
-                  color: 'white',
-                  borderRadius: '10px',
-                  padding: '2px 7px',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  boxShadow: '0 0 8px rgba(255,69,58,0.5)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                }}>
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </div>
-              )}
+
             </motion.div>
           )
         })}

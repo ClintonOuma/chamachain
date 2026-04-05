@@ -10,6 +10,7 @@ import usePageTitle from '../hooks/usePageTitle'
 import useMyRole from '../hooks/useMyRole'
 import ContributeModal from '../components/ContributeModal'
 import LoanModal from '../components/LoanModal'
+import NotificationBell from '../components/NotificationBell'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FLOATING INPUT - Liquid Glass Style
@@ -223,7 +224,6 @@ export default function DashboardPage() {
 
   const [chamas, setChamas] = useState([])
   const [notifications, setNotifications] = useState([])
-  const [unreadCount, setUnreadCount] = useState(0)
   const [totalSavings, setTotalSavings] = useState(0)
   const [activeLoansCount, setActiveLoansCount] = useState(0)
   const [activeNav, setActiveNav] = useState('dashboard')
@@ -432,37 +432,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Notification button - Liquid glass circle */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/notifications')}
-            style={{
-              background: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(14px)',
-              WebkitBackdropFilter: 'blur(14px)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              width: '46px', height: '46px',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'rgba(255,255,255,0.8)',
-              position: 'relative',
-              boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.35), 0 4px 16px rgba(0,0,0,0.2)',
-              transition: 'all 0.25s ease',
-            }}
-          >
-            <Bell size={18} strokeWidth={1.8} />
-            {unreadCount > 0 && (
-              <span style={{
-                position: 'absolute', top: '10px', right: '11px',
-                width: '8px', height: '8px',
-                background: '#ff453a',
-                borderRadius: '50%',
-                border: '2px solid #0a1628',
-                boxShadow: '0 0 8px rgba(255,69,58,0.6)',
-              }} />
-            )}
-          </motion.button>
+          <NotificationBell />
         </header>
 
         {/* Stats Grid */}

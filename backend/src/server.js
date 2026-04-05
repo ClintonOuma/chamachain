@@ -4,8 +4,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const dotenv = require("dotenv");
 const http = require("http");
-const socketService = require('./services/socketService');
-let io; // Declare io at module scope
+const { Server } = require('socket.io')
 const mongoose = require("mongoose");
 const { validateEnv } = require("./config/validateEnv");
 const { startCronJobs } = require('./services/cronService');
@@ -91,7 +90,39 @@ const superAdminRoutes = require('./routes/superAdminRoutes')
 app.use('/api/v1/super-admin', superAdminRoutes) 
 
 const server = http.createServer(app);
-io = socketService.init(server);
+const io = new Server(server, {
+  cors: {
+    origin: [
+      'http://localhost:5173',
+      'https://chamachain-nine.vercel.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean),
+    methods: ['GET', 'POST']
+  }
+})
+
+// Store io instance globally so controllers can use it
+global.io = io
+
+io.on('connection', (socket) => {
+  console.log('[socket] Client connected:', socket.id)
+
+  // User joins their personal room
+  socket.on('join', (userId) => {
+    socket.join(`user:${userId}`)
+    console.log(`[socket] User ${userId} joined their room`)
+  })
+
+  // User joins a chama room
+  socket.on('join-chama', (chamaId) => {
+    socket.join(`chama:${chamaId}`)
+    console.log(`[socket] Socket joined chama room: ${chamaId}`)
+  })
+
+  socket.on('disconnect', () => {
+    console.log('[socket] Client disconnected:', socket.id)
+  })
+})
 
 const mongoUri = process.env.MONGODB_URI.trim();
 
