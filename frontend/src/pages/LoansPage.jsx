@@ -1,4 +1,4 @@
-jsximport { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
  import { motion, AnimatePresence } from 'framer-motion'
  import { TrendingDown, Clock, CheckCircle, XCircle } from 'lucide-react'
  import Sidebar from '../components/Sidebar'
