@@ -3,10 +3,14 @@ import { useState, useEffect } from 'react'
  import Sidebar from '../components/Sidebar' 
  import api from '../services/api' 
  import useAuthStore from '../store/authStore' 
- import { getAiServiceUrl } from '../config/apiBase' 
  import usePageTitle from '../hooks/usePageTitle' 
  
- const AI_URL = getAiServiceUrl() 
+ const AI_URL = import.meta.env.VITE_AI_URL || 'http://127.0.0.1:8000' 
+ 
+ // Get userId correctly from user object 
+ const getUserId = (user) => { 
+   return user?.id || user?._id || null 
+ } 
  
  function ScoreGauge({ score }) { 
    const radius = 80 
@@ -70,62 +74,80 @@ import { useState, useEffect } from 'react'
    const [selectedChama, setSelectedChama] = useState('') 
    const [creditData, setCreditData] = useState(null) 
    const [healthData, setHealthData] = useState(null) 
-   const [loading, setLoading] = useState(false) 
-   const [error, setError] = useState(null) 
- 
-   useEffect(() => { 
-     console.log('AICoach: Using AI Service URL:', AI_URL) 
-     api.get('/chamas').then(res => { 
-       const list = res.data.chamas || [] 
-       setChamas(list) 
-       if (list.length > 0) { 
-         const firstId = list[0].chamaId?._id || list[0]._id 
-         setSelectedChama(firstId) 
-       } 
-     }) 
-   }, []) 
- 
-   useEffect(() => { 
-     if (!selectedChama) return 
-     const fetchAI = async () => { 
-       setLoading(true) 
-       setError(null) 
-       setCreditData(null) 
-       setHealthData(null) 
-       try { 
-         const userId = user?.id || user?._id 
-         if (!userId) { 
-           setError('User session not found. Please re-login.') 
-           return 
-         } 
- 
-         const scoreUrl = `${AI_URL}/ai/credit-score/${userId}/${selectedChama}` 
-         const healthUrl = `${AI_URL}/ai/group-health/${selectedChama}` 
- 
-         console.log('Fetching AI data from:', { scoreUrl, healthUrl }) 
- 
-         const [scoreRes, healthRes] = await Promise.all([ 
-           fetch(scoreUrl).then(async r => { 
-             if (!r.ok) throw new Error(`Score API failed: ${r.status}`) 
-             return r.json() 
-           }), 
-           fetch(healthUrl).then(async r => { 
-             if (!r.ok) throw new Error(`Health API failed: ${r.status}`) 
-             return r.json() 
-           }) 
-         ]) 
- 
-         if (scoreRes.success) setCreditData(scoreRes.data) 
-         if (healthRes.success) setHealthData(healthRes.data) 
-       } catch (err) { 
-         console.error('AI fetch error details:', err) 
-         setError(`Connection failed: ${err.message}. Target URL: ${AI_URL}`) 
-       } finally { 
-         setLoading(false) 
-       } 
-     } 
-     fetchAI() 
-   }, [selectedChama, user]) 
+   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const getUserId = (user) => {
+    return user?.id || user?._id || null
+  }
+
+  // Fetch AI data
+  const fetchAIData = async (chamaId) => {
+    if (!chamaId || !user) return
+    setLoading(true)
+    setCreditData(null)
+    setHealthData(null)
+    setError(null)
+
+    const userId = getUserId(user)
+    if (!userId) {
+      setError('User not found. Please log out and log in again.')
+      setLoading(false)
+      return
+    }
+
+    try {
+      // First check if AI service is alive
+      const healthCheck = await fetch(`${AI_URL}/health`, { signal: AbortSignal.timeout(10000) })
+      if (!healthCheck.ok) throw new Error('AI service unavailable')
+
+      // Fetch credit score and group health in parallel
+      const [scoreRes, groupRes] = await Promise.all([
+        fetch(`${AI_URL}/ai/credit-score/${userId}/${chamaId}`, { signal: AbortSignal.timeout(15000) }),
+        fetch(`${AI_URL}/ai/group-health/${chamaId}`, { signal: AbortSignal.timeout(15000) })
+      ])
+
+      const scoreData = await scoreRes.json()
+      const groupData = await groupRes.json()
+
+      if (scoreData.success && scoreData.data) {
+        setCreditData(scoreData.data)
+      } else {
+        setError('Could not load credit score data')
+      }
+
+      if (groupData.success && groupData.data) {
+        setHealthData(groupData.data)
+      }
+    } catch (err) {
+      console.error('AI Coach fetch error:', err)
+      if (err.name === 'TimeoutError' || err.message.includes('timeout')) {
+        setError('AI service is starting up (free tier takes ~30 seconds). Please wait and try again.')
+      } else {
+        setError('AI service unavailable. Make sure chamachain-ai is deployed on Render.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    console.log('AICoach: Using AI Service URL:', AI_URL)
+    api.get('/chamas').then(res => {
+      const list = res.data.chamas || []
+      setChamas(list)
+      if (list.length > 0) {
+        const firstId = list[0].chamaId?._id || list[0]._id
+        setSelectedChama(firstId)
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (selectedChama) {
+      fetchAIData(selectedChama)
+    }
+  }, [selectedChama, user]) 
  
    const riskColors = { low: '#10B981', medium: '#F59E0B', high: '#EF4444', very_high: '#7F1D1D' } 
    const riskLabels = { low: '✅ Low Risk', medium: '⚠️ Medium Risk', high: '🔴 High Risk', very_high: '🚫 Very High Risk' } 
@@ -162,106 +184,111 @@ import { useState, useEffect } from 'react'
              <div style={{ fontSize: '64px', marginBottom: '16px' }}>🤖</div> 
              <p style={{ fontFamily: 'Syne', fontSize: '20px', color: '#F8FAFC' }}>Select a chama to see your AI insights</p> 
            </div> 
-         ) : loading ? ( 
-           <div style={{ textAlign: 'center', padding: '80px 0' }}> 
-             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} 
-               style={{ width: '48px', height: '48px', borderRadius: '50%', border: '3px solid rgba(139,92,246,0.2)', borderTop: '3px solid #8B5CF6', margin: '0 auto 16px' }} /> 
-             <p style={{ color: '#64748B', fontFamily: 'DM Sans' }}>Analyzing your financial data...</p> 
-           </div> 
-         ) : creditData ? ( 
+         ) : ( 
            <> 
-             {/* Credit Score Hero */} 
-             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} 
-               className="glass-card" 
-               style={{ padding: '32px', marginBottom: '24px', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', gap: '40px', alignItems: 'center', flexWrap: 'wrap' }}> 
-               <ScoreGauge score={creditData.score} /> 
-               <div style={{ flex: 1 }}> 
-                 <span style={{ background: `${riskColors[creditData.riskLabel]}22`, color: riskColors[creditData.riskLabel], padding: '6px 16px', borderRadius: '20px', fontFamily: 'DM Sans', fontSize: '14px', fontWeight: 600 }}> 
-                   {riskLabels[creditData.riskLabel]} 
-                 </span> 
-                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '20px' }}> 
-                   {[ 
-                     { label: 'Total Contributed', value: `KES ${(creditData.totalContributed || 0).toLocaleString()}`, color: '#10B981' }, 
-                     { label: 'Contributions Made', value: creditData.contributionCount || 0, color: '#0EA5E9' }, 
-                     { label: 'Max Loan Eligible', value: `KES ${((creditData.totalContributed || 0) * 3).toLocaleString()}`, color: '#8B5CF6' } 
-                   ].map((s, i) => ( 
-                     <div key={i} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '16px' }}> 
-                       <p style={{ margin: '0 0 4px', fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B' }}>{s.label}</p> 
-                       <p style={{ margin: 0, fontFamily: 'Syne', fontSize: '18px', fontWeight: 700, color: s.color }}>{s.value}</p> 
-                     </div> 
-                   ))} 
-                 </div> 
+             {loading && ( 
+               <div style={{ textAlign: 'center', padding: '80px 0' }}> 
+                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} 
+                   style={{ width: '48px', height: '48px', borderRadius: '50%', border: '3px solid rgba(139,92,246,0.2)', borderTop: '3px solid #8B5CF6', margin: '0 auto 20px' }} /> 
+                 <p style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '8px' }}>Analyzing your data...</p> 
+                 <p style={{ fontFamily: 'DM Sans', color: '#64748B', fontSize: '14px' }}> 
+                   ⏳ First load may take 30-60 seconds while the AI service wakes up 
+                 </p> 
                </div> 
-             </motion.div> 
- 
-             {/* Score Breakdown */} 
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}> 
-               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card" style={{ padding: '28px' }}> 
-                 <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '24px' }}>📊 Score Breakdown</h3> 
-                 <ScoreBar label="Contribution Consistency" value={creditData.breakdown?.contributionConsistency || 0} max={25} description="Based on number of contributions made" /> 
-                 <ScoreBar label="Contribution Amount" value={creditData.breakdown?.contributionAmount || 0} max={20} description="vs minimum required amount" /> 
-                 <ScoreBar label="Repayment History" value={creditData.breakdown?.repaymentHistory || 0} max={25} description="Past loan repayment track record" /> 
-                 <ScoreBar label="Membership Tenure" value={creditData.breakdown?.membershipTenure || 0} max={15} description="How long you've been a member" /> 
-                 <ScoreBar label="Contribution Streak" value={creditData.breakdown?.contributionStreak || 0} max={15} description="Consecutive months contributed" /> 
-               </motion.div> 
- 
-               {/* AI Tips */} 
-               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card" style={{ padding: '28px' }}> 
-                 <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '24px' }}>💡 Personalized Insights</h3> 
-                 {(creditData.tips || []).map((tip, i) => ( 
-                   <div key={i} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', marginBottom: '12px', borderLeft: '3px solid #8B5CF6' }}> 
-                     <p style={{ margin: 0, fontFamily: 'DM Sans', fontSize: '14px', color: '#E2E8F0', lineHeight: 1.6 }}> 
-                       {['💡', '⚡', '📈', '🎯', '🔥'][i % 5]} {tip} 
-                     </p> 
+             )} 
+             {error && ( 
+               <div style={{ textAlign: 'center', padding: '60px 0' }}> 
+                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div> 
+                 <p style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '8px' }}>AI Service Unavailable</p> 
+                 <p style={{ fontFamily: 'DM Sans', color: '#94A3B8', marginBottom: '24px', maxWidth: '400px', margin: '0 auto 24px', lineHeight: 1.6 }}>{error}</p> 
+                 <button className="btn-primary" onClick={() => fetchAIData(selectedChama)}> 
+                   🔄 Try Again 
+                 </button> 
+               </div> 
+             )} 
+             {!loading && !error && creditData && ( 
+               <> 
+                 {/* Credit Score Hero */} 
+                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} 
+                   className="glass-card" 
+                   style={{ padding: '32px', marginBottom: '24px', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', gap: '40px', alignItems: 'center', flexWrap: 'wrap' }}> 
+                   <ScoreGauge score={creditData.score} /> 
+                   <div style={{ flex: 1 }}> 
+                     <span style={{ background: `${riskColors[creditData.riskLabel]}22`, color: riskColors[creditData.riskLabel], padding: '6px 16px', borderRadius: '20px', fontFamily: 'DM Sans', fontSize: '14px', fontWeight: 600 }}> 
+                       {riskLabels[creditData.riskLabel]} 
+                     </span> 
+                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '20px' }}> 
+                       {[ 
+                         { label: 'Total Contributed', value: `KES ${(creditData.totalContributed || 0).toLocaleString()}`, color: '#10B981' }, 
+                         { label: 'Contributions Made', value: creditData.contributionCount || 0, color: '#0EA5E9' }, 
+                         { label: 'Max Loan Eligible', value: `KES ${((creditData.totalContributed || 0) * 3).toLocaleString()}`, color: '#8B5CF6' } 
+                       ].map((s, i) => ( 
+                         <div key={i} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '16px' }}> 
+                           <p style={{ margin: '0 0 4px', fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B' }}>{s.label}</p> 
+                           <p style={{ margin: 0, fontFamily: 'Syne', fontSize: '18px', fontWeight: 700, color: s.color }}>{s.value}</p> 
+                         </div> 
+                       ))} 
+                     </div> 
                    </div> 
-                 ))} 
-               </motion.div> 
-             </div> 
+                 </motion.div> 
  
-             {/* Group Health */} 
-             {healthData && ( 
-               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card" style={{ padding: '28px' }}> 
-                 <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '20px' }}>🏦 Group Health Score</h3> 
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}> 
-                   <div style={{ textAlign: 'center' }}> 
-                     <p style={{ fontFamily: 'Syne', fontSize: '56px', fontWeight: 800, color: healthColors[healthData.label] || '#0EA5E9', margin: 0, lineHeight: 1 }}>{healthData.score}</p> 
-                     <p style={{ fontFamily: 'DM Sans', color: '#64748B', marginTop: '4px', textTransform: 'capitalize' }}>{healthData.label}</p> 
-                   </div> 
-                   <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}> 
-                     {[ 
-                       { label: 'Members', value: healthData.totalMembers, color: '#0EA5E9' }, 
-                       { label: 'Active Loans', value: healthData.activeLoans, color: '#F59E0B' }, 
-                       { label: 'Defaults', value: healthData.defaultedLoans, color: '#EF4444' }, 
-                       { label: 'Balance', value: `KES ${(healthData.totalBalance || 0).toLocaleString()}`, color: '#10B981' } 
-                     ].map((s, i) => ( 
-                       <div key={i} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '16px 20px', textAlign: 'center' }}> 
-                         <p style={{ margin: '0 0 4px', fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B' }}>{s.label}</p> 
-                         <p style={{ margin: 0, fontFamily: 'Syne', fontSize: '18px', fontWeight: 700, color: s.color }}>{s.value}</p> 
+                 {/* Score Breakdown */} 
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}> 
+                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card" style={{ padding: '28px' }}> 
+                     <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '24px' }}>📊 Score Breakdown</h3> 
+                     <ScoreBar label="Contribution Consistency" value={creditData.breakdown?.contributionConsistency || 0} max={25} description="Based on number of contributions made" /> 
+                     <ScoreBar label="Contribution Amount" value={creditData.breakdown?.contributionAmount || 0} max={20} description="vs minimum required amount" /> 
+                     <ScoreBar label="Repayment History" value={creditData.breakdown?.repaymentHistory || 0} max={25} description="Past loan repayment track record" /> 
+                     <ScoreBar label="Membership Tenure" value={creditData.breakdown?.membershipTenure || 0} max={15} description="How long you've been a member" /> 
+                     <ScoreBar label="Contribution Streak" value={creditData.breakdown?.contributionStreak || 0} max={15} description="Consecutive months contributed" /> 
+                   </motion.div> 
+ 
+                   {/* AI Tips */} 
+                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card" style={{ padding: '28px' }}> 
+                     <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '24px' }}>💡 Personalized Insights</h3> 
+                     {(creditData.tips || []).map((tip, i) => ( 
+                       <div key={i} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', marginBottom: '12px', borderLeft: '3px solid #8B5CF6' }}> 
+                         <p style={{ margin: 0, fontFamily: 'DM Sans', fontSize: '14px', color: '#E2E8F0', lineHeight: 1.6 }}> 
+                           {['💡', '⚡', '📈', '🎯', '🔥'][i % 5]} {tip} 
+                         </p> 
                        </div> 
                      ))} 
-                   </div> 
+                   </motion.div> 
                  </div> 
-               </motion.div> 
+ 
+                 {/* Group Health */} 
+                 {healthData && ( 
+                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card" style={{ padding: '28px' }}> 
+                     <h3 style={{ fontFamily: 'Syne', fontSize: '18px', color: '#F8FAFC', marginBottom: '20px' }}>🏦 Group Health Score</h3> 
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}> 
+                       <div style={{ textAlign: 'center' }}> 
+                         <p style={{ fontFamily: 'Syne', fontSize: '56px', fontWeight: 800, color: healthColors[healthData.label] || '#0EA5E9', margin: 0, lineHeight: 1 }}>{healthData.score}</p> 
+                         <p style={{ fontFamily: 'DM Sans', color: '#64748B', marginTop: '4px', textTransform: 'capitalize' }}>{healthData.label}</p> 
+                       </div> 
+                       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}> 
+                         {[ 
+                           { label: 'Members', value: healthData.totalMembers, color: '#0EA5E9' }, 
+                           { label: 'Active Loans', value: healthData.activeLoans, color: '#F59E0B' }, 
+                           { label: 'Defaults', value: healthData.defaultedLoans, color: '#EF4444' }, 
+                           { label: 'Balance', value: `KES ${(healthData.totalBalance || 0).toLocaleString()}`, color: '#10B981' } 
+                         ].map((s, i) => ( 
+                           <div key={i} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '16px 20px', textAlign: 'center' }}> 
+                             <p style={{ margin: '0 0 4px', fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B' }}>{s.label}</p> 
+                             <p style={{ margin: 0, fontFamily: 'Syne', fontSize: '18px', fontWeight: 700, color: s.color }}>{s.value}</p> 
+                           </div> 
+                         ))} 
+                       </div> 
+                     </div> 
+                   </motion.div> 
+                 )} 
+               </> 
+             )} 
+             {!loading && !error && !creditData && ( 
+               <div style={{ textAlign: 'center', padding: '60px 0' }}> 
+                 <p style={{ color: '#64748B', fontFamily: 'DM Sans' }}>No AI data available for this chama.</p> 
+               </div> 
              )} 
            </> 
-         ) : error ? ( 
-           <div style={{ textAlign: 'center', padding: '60px 0', background: 'rgba(239,68,68,0.05)', borderRadius: '16px', border: '1px dashed rgba(239,68,68,0.2)' }}> 
-             <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div> 
-             <p style={{ color: '#EF4444', fontFamily: 'Syne', fontSize: '18px', fontWeight: 600 }}>{error}</p> 
-             <p style={{ color: '#64748B', fontFamily: 'DM Sans', marginTop: '8px', maxWidth: '500px', margin: '8px auto 0' }}> 
-               Please ensure the AI service is live on Render and that the <strong>VITE_AI_URL</strong> environment variable is set correctly in Vercel. 
-             </p> 
-             <button 
-               onClick={() => window.location.reload()} 
-               style={{ marginTop: '24px', padding: '10px 24px', borderRadius: '12px', background: '#EF4444', color: 'white', border: 'none', fontFamily: 'DM Sans', fontWeight: 600, cursor: 'pointer' }} 
-             > 
-               Retry Connection 
-             </button> 
-           </div> 
-         ) : ( 
-           <div style={{ textAlign: 'center', padding: '60px 0' }}> 
-             <p style={{ color: '#64748B', fontFamily: 'DM Sans' }}>No AI data available for this chama.</p> 
-           </div> 
          )} 
        </main> 
      </div> 
