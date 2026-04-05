@@ -1,5 +1,5 @@
 
-jsximport { useState, useEffect } from 'react' 
+import { useState, useEffect } from 'react' 
  import { useNavigate } from 'react-router-dom' 
  import { motion, AnimatePresence } from 'framer-motion' 
  import { Plus, Users, Wallet, ArrowRight, Copy, Check } from 'lucide-react' 
