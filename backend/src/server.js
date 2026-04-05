@@ -1,184 +1,89 @@
-const path = require("path");
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const dotenv = require("dotenv");
-const http = require("http");
-const { Server } = require('socket.io')
-const mongoose = require("mongoose");
-const { validateEnv } = require("./config/validateEnv");
-const { startCronJobs } = require('./services/cronService');
-const { generalLimiter } = require('./middleware/rateLimiter');
+const dotenv = require('dotenv') 
+dotenv.config() 
 
-dotenv.config({ path: path.join(__dirname, "..", ".env") });
-validateEnv();
+const express = require('express') 
+const http = require('http') 
+const cors = require('cors') 
+const helmet = require('helmet') 
+const mongoose = require('mongoose') 
+const { Server } = require('socket.io') 
 
-const app = express();
-app.set("trust proxy", 1);
+const app = express() 
 
-// Allow SPA on another origin (e.g. Vite :5173) to read API responses
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-  })
-);
-
-const corsStrict =
-  process.env.CORS_STRICT === "1" || process.env.CORS_STRICT === "true";
-
-function buildCorsOrigins() {
-  const origins = new Set([
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-  ]);
-  const raw =
-    process.env.CORS_ORIGINS?.trim() ||
-    process.env.FRONTEND_URL?.trim() ||
-    "";
-  for (const part of raw.split(",")) {
-    const o = part.trim().replace(/\/$/, "");
-    if (o) origins.add(o);
-  }
-  return [...origins];
-}
-
+app.use(helmet()) 
 app.use(cors({ 
   origin: [ 
     'http://localhost:5173', 
     'http://127.0.0.1:5173', 
-    /^https:\/\/.*\.vercel\.app$/, // Allow all Vercel subdomains 
+    'https://chamachain-nine.vercel.app', 
     process.env.FRONTEND_URL 
   ].filter(Boolean), 
   credentials: true, 
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 
   allowedHeaders: ['Content-Type', 'Authorization'] 
 })) 
-app.use(express.json());
-app.use('/api/', generalLimiter);
+app.use(express.json()) 
 
-const authRoutes = require('./routes/authRoutes');
-app.use('/api/v1/auth', authRoutes);
+const server = http.createServer(app) 
 
-const chamaRoutes = require('./routes/chamaRoutes');
-app.use('/api/v1/chamas', chamaRoutes);
+const io = new Server(server, { 
+  cors: { 
+    origin: [ 
+      'http://localhost:5173', 
+      'https://chamachain-nine.vercel.app', 
+      process.env.FRONTEND_URL 
+    ].filter(Boolean), 
+    methods: ['GET', 'POST'] 
+  } 
+}) 
 
-const contributionRoutes = require('./routes/contributionRoutes');
-app.use('/api/v1/contributions', contributionRoutes);
+global.io = io 
 
-const loanRoutes = require('./routes/loanRoutes');
-app.use('/api/v1/loans', loanRoutes);
+io.on('connection', (socket) => { 
+  socket.on('join', (userId) => { if (userId) socket.join(`user:${userId}`) }) 
+  socket.on('join-chama', (chamaId) => { if (chamaId) socket.join(`chama:${chamaId}`) }) 
+}) 
 
-const notificationRoutes = require('./routes/notificationRoutes');
-app.use('/api/v1/notifications', notificationRoutes);
-
-const userRoutes = require('./routes/userRoutes');
-app.use('/api/v1/users', userRoutes);
-
-const voteRoutes = require('./routes/voteRoutes');
-app.use('/api/v1/votes', voteRoutes);
-
-const aiRoutes = require('./routes/aiRoutes');
-app.use('/api/v1/ai', aiRoutes);
-
-const mpesaRoutes = require('./routes/mpesaRoutes')
-app.use('/api/v1/mpesa', mpesaRoutes)
-
+// Routes 
+const authRoutes = require('./routes/authRoutes') 
+const chamaRoutes = require('./routes/chamaRoutes') 
+const contributionRoutes = require('./routes/contributionRoutes') 
+const loanRoutes = require('./routes/loanRoutes') 
+const notificationRoutes = require('./routes/notificationRoutes') 
+const userRoutes = require('./routes/userRoutes') 
+const mpesaRoutes = require('./routes/mpesaRoutes') 
+const voteRoutes = require('./routes/voteRoutes') 
 const reportRoutes = require('./routes/reportRoutes') 
-app.use('/api/v1/reports', reportRoutes) 
-
 const superAdminRoutes = require('./routes/superAdminRoutes') 
+
+app.use('/api/v1/auth', authRoutes) 
+app.use('/api/v1/chamas', chamaRoutes) 
+app.use('/api/v1/contributions', contributionRoutes) 
+app.use('/api/v1/loans', loanRoutes) 
+app.use('/api/v1/notifications', notificationRoutes) 
+app.use('/api/v1/users', userRoutes) 
+app.use('/api/v1/mpesa', mpesaRoutes) 
+app.use('/api/v1/votes', voteRoutes) 
+app.use('/api/v1/reports', reportRoutes) 
 app.use('/api/v1/super-admin', superAdminRoutes) 
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: [
-      'http://localhost:5173',
-      'https://chamachain-nine.vercel.app',
-      process.env.FRONTEND_URL
-    ].filter(Boolean),
-    methods: ['GET', 'POST']
-  }
-})
+app.get('/api/v1/health', (req, res) => { 
+  res.json({ success: true, message: 'ChamaChain API running', timestamp: new Date() }) 
+}) 
 
-// Store io instance globally so controllers can use it
-global.io = io
+const { errorHandler, notFound } = require('./middleware/errorHandler') 
+app.use(notFound) 
+app.use(errorHandler) 
 
-io.on('connection', (socket) => {
-  console.log('[socket] Client connected:', socket.id)
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chamachain' 
 
-  // User joins their personal room
-  socket.on('join', (userId) => {
-    socket.join(`user:${userId}`)
-    console.log(`[socket] User ${userId} joined their room`)
-  })
+mongoose.connect(MONGO_URI) 
+  .then(() => { 
+    console.log('MongoDB connected') 
+    const { startCronJobs } = require('./services/cronService') 
+    startCronJobs() 
+  }) 
+  .catch(err => console.error('MongoDB error:', err.message)) 
 
-  // User joins a chama room
-  socket.on('join-chama', (chamaId) => {
-    socket.join(`chama:${chamaId}`)
-    console.log(`[socket] Socket joined chama room: ${chamaId}`)
-  })
-
-  socket.on('disconnect', () => {
-    console.log('[socket] Client disconnected:', socket.id)
-  })
-})
-
-const mongoUri = process.env.MONGODB_URI.trim();
-
-app.get("/api/v1/health", (req, res) => {
-  res.json({ success: true, message: "ChamaChain API running" });
-});
-
-const { errorHandler, notFound } = require('./middleware/errorHandler')
-app.use(notFound)
-app.use(errorHandler)
-
-const startPort = Number.parseInt(process.env.PORT, 10) || 4000;
-const MAX_PORT_TRIES = 30;
-
-function listenWithFallback(port, triesLeft) {
-  if (triesLeft <= 0) {
-    console.error("Could not bind to any port after multiple attempts.");
-    process.exit(1);
-  }
-
-  function onListening() {
-    server.removeListener("error", onError);
-    process.env.ACTUAL_PORT = String(port);
-    console.log(`Server running on port ${port}`);
-  }
-
-  function onError(err) {
-    server.removeListener("listening", onListening);
-    if (err.code === "EADDRINUSE") {
-      console.warn(`Port ${port} in use, trying ${port + 1}...`);
-      listenWithFallback(port + 1, triesLeft - 1);
-    } else {
-      console.error(err);
-      process.exit(1);
-    }
-  }
-
-  server.once("listening", onListening);
-  server.once("error", onError);
-  server.listen(port);
-}
-
-async function start() {
-  try {
-    mongoose.set("bufferCommands", false);
-    await mongoose.connect(mongoUri);
-    console.log("MongoDB connected");
-    startCronJobs();
-    listenWithFallback(startPort, MAX_PORT_TRIES);
-  } catch (error) {
-    console.error("MongoDB connection error:", error.message);
-    process.exit(1);
-  }
-}
-
-start();
-
-module.exports = { app, server, io };
-
+const PORT = process.env.PORT || 4000 
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`))

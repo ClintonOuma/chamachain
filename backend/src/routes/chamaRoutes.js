@@ -11,9 +11,9 @@ const AuditLog = require('../models/AuditLog')
 
 router.post('/', protect, createChama);
 router.get('/', protect, getMyChamas);
+router.post('/join', protect, joinChama);
 router.get('/:chamaId', protect, getChamaById);
 router.patch('/:chamaId', protect, requireRole('admin'), updateChama);
-router.post('/join', protect, joinChama);
 router.get('/:chamaId/members', protect, getMembers);
 router.patch('/:chamaId/members/:userId/role', protect, requireRole('admin'), changeMemberRole);
 router.delete('/:chamaId/members/:userId', protect, requireRole('admin'), removeMember);
