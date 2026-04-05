@@ -1,9 +1,10 @@
-const cron = require('node-cron') 
- const Membership = require('../models/Membership') 
- const Contribution = require('../models/Contribution') 
- const Loan = require('../models/Loan') 
- const Chama = require('../models/Chama') 
- const { createNotification } = require('./notificationService') 
+const cron = require('node-cron')
+const axios = require('axios')
+const Membership = require('../models/Membership')
+const Contribution = require('../models/Contribution')
+const Loan = require('../models/Loan')
+const Chama = require('../models/Chama')
+const { createNotification } = require('./notificationService') 
  
  // Run on 1st of every month at midnight 
  const updateContributionStreaks = cron.schedule('0 0 1 * *', async () => { 
@@ -102,13 +103,36 @@ const cron = require('node-cron')
    } catch (err) { 
      console.error('[cron] Reminder error:', err.message) 
    } 
- }, { scheduled: false }) 
- 
- const startCronJobs = () => { 
-   updateContributionStreaks.start() 
-   checkLateLoans.start() 
-   sendContributionReminders.start() 
-   console.log('[cron] All cron jobs started') 
- } 
+ }, { scheduled: false })
+
+// Ping AI service every 14 minutes to keep it awake
+const keepAIAlive = cron.schedule('*/14 * * * *', async () => {
+  try {
+    const AI_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
+    await axios.get(`${AI_URL}/health`, { timeout: 10000 })
+    console.log('[cron] AI service ping successful')
+  } catch (err) {
+    console.log('[cron] AI service ping failed:', err.message)
+  }
+}, { scheduled: false })
+
+// Ping backend itself to keep it awake (self-ping)
+const keepBackendAlive = cron.schedule('*/14 * * * *', async () => {
+  try {
+    await axios.get(`${process.env.BACKEND_URL || 'http://localhost:4000'}/api/v1/health`, { timeout: 10000 })
+    console.log('[cron] Backend self-ping successful')
+  } catch (err) {
+    console.log('[cron] Backend self-ping failed:', err.message)
+  }
+}, { scheduled: false })
+
+const startCronJobs = () => {
+  updateContributionStreaks.start()
+  checkLateLoans.start()
+  sendContributionReminders.start()
+  keepAIAlive.start()
+  keepBackendAlive.start()
+  console.log('[cron] All cron jobs started')
+} 
  
  module.exports = { startCronJobs } 
