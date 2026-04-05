@@ -1,17 +1,47 @@
 import { useState, useEffect } from 'react' 
- import { motion } from 'framer-motion' 
- import Sidebar from '../components/Sidebar' 
- import api from '../services/api' 
- import useAuthStore from '../store/authStore' 
- import usePageTitle from '../hooks/usePageTitle' 
+import { motion } from 'framer-motion' 
+import Sidebar from '../components/Sidebar' 
+import api from '../services/api' 
+import useAuthStore from '../store/authStore' 
+import usePageTitle from '../hooks/usePageTitle' 
  
- const AI_URL = import.meta.env.VITE_AI_URL || 'http://127.0.0.1:8000' 
+// Get userId correctly from user object 
+const getUserId = (user) => { 
+  return user?.id || user?._id || null 
+} 
  
- // Get userId correctly from user object 
- const getUserId = (user) => { 
-   return user?.id || user?._id || null 
- } 
+function ScoreGauge({ score }) { 
+  const radius = 80 
+  const stroke = 10 
+  const normalizedRadius = radius - stroke * 2 
+  const circumference = normalizedRadius * 2 * Math.PI 
+  const strokeDashoffset = circumference - (score / 100) * circumference 
+  const color = score >= 80 ? '#10B981' : score >= 60 ? '#F59E0B' : score >= 40 ? '#EF4444' : '#7F1D1D' 
  
+  return ( 
+    <div style={{ position: 'relative', width: '180px', height: '180px', margin: '0 auto' }}> 
+      <svg height={radius * 2} width={radius * 2} style={{ transform: 'rotate(-90deg)' }}> 
+        <circle stroke="rgba(255,255,255,0.08)" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx={radius} cy={radius} /> 
+        <circle 
+          stroke={color} 
+          fill="transparent" 
+          strokeWidth={stroke} 
+          strokeDasharray={`${circumference} ${circumference}`} 
+          strokeDashoffset={strokeDashoffset} 
+          strokeLinecap="round" 
+          r={normalizedRadius} 
+          cx={radius} 
+          cy={radius} 
+          style={{ transition: 'stroke-dashoffset 1s ease, stroke 0.5s ease', filter: `drop-shadow(0 0 8px ${color})` }} 
+        /> 
+      </svg> 
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}> 
+        <span style={{ fontFamily: 'Syne', fontSize: '42px', fontWeight: 800, color: '#F8FAFC' }}>{score}</span> 
+        <span style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B' }}>Credit Score</span> 
+      </div> 
+    </div> 
+  ) 
+} 
  function ScoreGauge({ score }) { 
    const radius = 80 
    const stroke = 10 
@@ -132,7 +162,7 @@ import { useState, useEffect } from 'react'
   }
 
   useEffect(() => {
-    console.log('AICoach: Using AI Service URL:', AI_URL)
+    console.log('AICoach: Using backend AI proxy API')
     api.get('/chamas').then(res => {
       const list = res.data.chamas || []
       setChamas(list)

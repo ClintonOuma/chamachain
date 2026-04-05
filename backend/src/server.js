@@ -47,6 +47,7 @@ io.on('connection', (socket) => {
 // Routes 
 const authRoutes = require('./routes/authRoutes') 
 const chamaRoutes = require('./routes/chamaRoutes') 
+const aiRoutes = require('./routes/aiRoutes') 
 const contributionRoutes = require('./routes/contributionRoutes') 
 const loanRoutes = require('./routes/loanRoutes') 
 const notificationRoutes = require('./routes/notificationRoutes') 
