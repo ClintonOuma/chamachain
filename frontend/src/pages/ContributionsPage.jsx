@@ -1,5 +1,5 @@
 
-jsximport { useState, useEffect } from 'react' 
+import { useState, useEffect } from 'react' 
  import { motion } from 'framer-motion' 
  import Sidebar from '../components/Sidebar' 
  import NotificationBell from '../components/NotificationBell' 
