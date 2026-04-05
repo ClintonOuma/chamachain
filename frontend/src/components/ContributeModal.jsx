@@ -1,7 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import { io } from 'socket.io-client'
+
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
 export default function ContributeModal({ chamaId, chamaName, onClose, onSuccess }) {
   const { user } = useAuthStore()
@@ -24,23 +27,45 @@ export default function ContributeModal({ chamaId, chamaName, onClose, onSuccess
 
   // Poll for payment status
   useEffect(() => {
-    if (step === 'waiting' && contributionId) {
-      pollRef.current = setInterval(async () => {
-        try {
-          const res = await api.get(`/mpesa/status/${contributionId}`)
-          if (res.data.status === 'success') {
-            clearInterval(pollRef.current)
-            setStep('success')
-            setTimeout(() => { onSuccess(); onClose() }, 2000)
-          } else if (res.data.status === 'failed') {
-            clearInterval(pollRef.current)
-            setStep('failed')
-            setError('Payment was cancelled or failed. Please try again.')
-          }
-        } catch (e) {}
-      }, 3000)
+    if (step !== 'waiting' || !contributionId) return
+
+    // Socket listener for instant update
+    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] })
+    const userId = JSON.parse(localStorage.getItem('user') || '{}')
+    const uid = userId?.id || userId?._id
+    if (uid) socket.emit('join', uid)
+
+    socket.on('contribution_confirmed', (data) => {
+      if (data.contributionId?.toString() === contributionId?.toString()) {
+        clearInterval(pollRef.current)
+        setStep('success')
+        socket.disconnect()
+        setTimeout(() => { onSuccess(); onClose() }, 2500)
+      }
+    })
+
+    // Also poll as backup every 3 seconds
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await api.get(`/mpesa/status/${contributionId}`)
+        if (res.data.status === 'success') {
+          clearInterval(pollRef.current)
+          setStep('success')
+          socket.disconnect()
+          setTimeout(() => { onSuccess(); onClose() }, 2500)
+        } else if (res.data.status === 'failed') {
+          clearInterval(pollRef.current)
+          setStep('failed')
+          socket.disconnect()
+          setError('Payment was cancelled or failed. Please try again.')
+        }
+      } catch (e) {}
+    }, 3000)
+
+    return () => {
+      clearInterval(pollRef.current)
+      socket.disconnect()
     }
-    return () => clearInterval(pollRef.current)
   }, [step, contributionId])
 
   const handleMpesaContribute = async () => {
@@ -93,6 +118,11 @@ export default function ContributeModal({ chamaId, chamaName, onClose, onSuccess
         {step === 'form' && (
           <>
             <h3 style={{ fontFamily: 'Syne', fontSize: '22px', color: '#F8FAFC', marginBottom: '4px' }}>💸 Contribute</h3>
+            <div style={{ display: 'inline-block', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '20px', padding: '3px 10px', marginBottom: '16px' }}>
+              <span style={{ fontFamily: 'DM Sans', fontSize: '11px', color: '#F59E0B', fontWeight: 600 }}>
+                🧪 Sandbox Mode — No real money
+              </span>
+            </div>
             <p style={{ fontFamily: 'DM Sans', color: '#64748B', fontSize: '14px', marginBottom: '24px' }}>{chamaName}</p>
 
             {/* Method selector */}
@@ -155,16 +185,35 @@ export default function ContributeModal({ chamaId, chamaName, onClose, onSuccess
             <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
               style={{ fontSize: '64px', marginBottom: '16px' }}>📱</motion.div>
             <h3 style={{ fontFamily: 'Syne', fontSize: '20px', color: '#F8FAFC', marginBottom: '8px' }}>Check Your Phone!</h3>
-            <p style={{ fontFamily: 'DM Sans', color: '#94A3B8', marginBottom: '8px' }}>
-              An M-Pesa prompt has been sent to <strong style={{ color: '#0EA5E9' }}>+254{phone}</strong>
+            <p style={{ fontFamily: 'DM Sans', color: '#94A3B8', marginBottom: '16px' }}>
+              M-Pesa prompt sent to <strong style={{ color: '#0EA5E9' }}>+254{phone}</strong>
             </p>
-            <p style={{ fontFamily: 'DM Sans', color: '#64748B', fontSize: '13px', marginBottom: '24px' }}>
-              Enter your M-Pesa PIN to complete the payment of <strong style={{ color: '#10B981' }}>KES {Number(amount).toLocaleString()}</strong>
-            </p>
+
+            {/* Sandbox notice */}
+            <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '12px', padding: '14px', marginBottom: '16px', textAlign: 'left' }}>
+              <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#F59E0B', margin: '0 0 6px', fontWeight: 700 }}>
+                🧪 Sandbox/Test Mode
+              </p>
+              <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#94A3B8', margin: '0 0 4px' }}>
+                Test Phone: <strong style={{ color: '#F8FAFC' }}>0708374149</strong>
+              </p>
+              <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#94A3B8', margin: '0 0 4px' }}>
+                Test PIN: <strong style={{ color: '#F8FAFC' }}>1234</strong>
+              </p>
+              <p style={{ fontFamily: 'DM Sans', fontSize: '11px', color: '#64748B', margin: 0 }}>
+                No real money deducted. Balance updates in ~10 seconds automatically.
+              </p>
+            </div>
+
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-              style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px solid rgba(14,165,233,0.2)', borderTop: '3px solid #0EA5E9', margin: '0 auto 16px' }} />
-            <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#475569' }}>Waiting for confirmation...</p>
-            <button onClick={onClose} style={{ marginTop: '16px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: '13px' }}>Cancel</button>
+              style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px solid rgba(14,165,233,0.2)', borderTop: '3px solid #0EA5E9', margin: '0 auto 12px' }} />
+            <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B' }}>
+              Waiting for confirmation... (~10 seconds)
+            </p>
+            <button onClick={() => { clearInterval(pollRef.current); onClose() }}
+              style={{ marginTop: '16px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: '13px' }}>
+              Cancel
+            </button>
           </div>
         )}
 
