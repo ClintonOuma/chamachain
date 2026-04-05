@@ -8,7 +8,9 @@ const helmet = require('helmet')
 const mongoose = require('mongoose') 
 const { Server } = require('socket.io') 
 
-const app = express() 
+const app = express()
+
+app.set('trust proxy', 1)
 
 app.use(helmet()) 
 app.use(cors({ 
@@ -57,15 +59,16 @@ const voteRoutes = require('./routes/voteRoutes')
 const reportRoutes = require('./routes/reportRoutes') 
 const superAdminRoutes = require('./routes/superAdminRoutes') 
 
-app.use('/api/v1/auth', authRoutes) 
-app.use('/api/v1/chamas', chamaRoutes) 
-app.use('/api/v1/contributions', contributionRoutes) 
-app.use('/api/v1/loans', loanRoutes) 
-app.use('/api/v1/notifications', notificationRoutes) 
-app.use('/api/v1/users', userRoutes) 
-app.use('/api/v1/mpesa', mpesaRoutes) 
-app.use('/api/v1/votes', voteRoutes) 
-app.use('/api/v1/reports', reportRoutes) 
+app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/chamas', chamaRoutes)
+app.use('/api/v1/ai', aiRoutes)
+app.use('/api/v1/contributions', contributionRoutes)
+app.use('/api/v1/loans', loanRoutes)
+app.use('/api/v1/notifications', notificationRoutes)
+app.use('/api/v1/users', userRoutes)
+app.use('/api/v1/mpesa', mpesaRoutes)
+app.use('/api/v1/votes', voteRoutes)
+app.use('/api/v1/reports', reportRoutes)
 app.use('/api/v1/super-admin', superAdminRoutes) 
 
 app.get('/api/v1/health', (req, res) => { 
