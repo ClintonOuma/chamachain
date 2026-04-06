@@ -6,6 +6,39 @@ import { io } from 'socket.io-client'
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
+function CountdownBar({ duration, onComplete }) { 
+  const [timeLeft, setTimeLeft] = useState(duration) 
+
+  useEffect(() => { 
+    const timer = setInterval(() => { 
+      setTimeLeft(prev => { 
+        if (prev <= 1) { 
+          clearInterval(timer) 
+          return 0 
+        } 
+        return prev - 1 
+      }) 
+    }, 1000) 
+    return () => clearInterval(timer) 
+  }, []) 
+
+  const pct = (timeLeft / duration) * 100 
+
+  return ( 
+    <div style={{ marginBottom: '8px' }}> 
+      <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginBottom: '6px' }}> 
+        <motion.div 
+          animate={{ width: `${pct}%` }} 
+          style={{ height: '100%', background: timeLeft > 10 ? '#10B981' : '#F59E0B', borderRadius: '2px', transition: 'width 1s linear' }} 
+        /> 
+      </div> 
+      <p style={{ fontFamily: 'DM Sans', fontSize: '11px', color: '#475569' }}> 
+        Auto-confirms in {timeLeft} s 
+      </p> 
+    </div> 
+  ) 
+} 
+
 export default function ContributeModal({ chamaId, chamaName, onClose, onSuccess }) {
   const { user } = useAuthStore()
   const [method, setMethod] = useState('mpesa')
@@ -180,53 +213,119 @@ export default function ContributeModal({ chamaId, chamaName, onClose, onSuccess
           </>
         )}
 
-        {step === 'waiting' && (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
-              style={{ fontSize: '64px', marginBottom: '16px' }}>📱</motion.div>
-            <h3 style={{ fontFamily: 'Syne', fontSize: '20px', color: '#F8FAFC', marginBottom: '8px' }}>Check Your Phone!</h3>
-            <p style={{ fontFamily: 'DM Sans', color: '#94A3B8', marginBottom: '16px' }}>
-              M-Pesa prompt sent to <strong style={{ color: '#0EA5E9' }}>+254{phone}</strong>
-            </p>
+        {step === 'waiting' && ( 
+  <div style={{ textAlign: 'center', padding: '20px 0' }}> 
 
-            {/* Sandbox notice */}
-            <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '12px', padding: '14px', marginBottom: '16px', textAlign: 'left' }}>
-              <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#F59E0B', margin: '0 0 6px', fontWeight: 700 }}>
-                🧪 Sandbox/Test Mode
-              </p>
-              <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#94A3B8', margin: '0 0 4px' }}>
-                Test Phone: <strong style={{ color: '#F8FAFC' }}>0708374149</strong>
-              </p>
-              <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#94A3B8', margin: '0 0 4px' }}>
-                Test PIN: <strong style={{ color: '#F8FAFC' }}>1234</strong>
-              </p>
-              <p style={{ fontFamily: 'DM Sans', fontSize: '11px', color: '#64748B', margin: 0 }}>
-                No real money deducted. Balance updates in ~10 seconds automatically.
-              </p>
-            </div>
+    {/* Animated phone */} 
+    <motion.div 
+      animate={{ scale: [1, 1.05, 1] }} 
+      transition={{ duration: 1.5, repeat: Infinity }} 
+      style={{ fontSize: '64px', marginBottom: '16px' }} 
+    >📱</motion.div> 
 
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-              style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px solid rgba(14,165,233,0.2)', borderTop: '3px solid #0EA5E9', margin: '0 auto 12px' }} />
-            <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B' }}>
-              Waiting for confirmation... (~10 seconds)
-            </p>
-            <button onClick={() => { clearInterval(pollRef.current); onClose() }}
-              style={{ marginTop: '16px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: '13px' }}>
-              Cancel
-            </button>
-          </div>
-        )}
+    <h3 style={{ fontFamily: 'Syne', fontSize: '20px', color: '#F8FAFC', marginBottom: '8px' }}> 
+      M-Pesa Payment Initiated 
+    </h3> 
 
-        {step === 'success' && (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200 }}
-              style={{ fontSize: '64px', marginBottom: '16px' }}>✅</motion.div>
-            <h3 style={{ fontFamily: 'Syne', fontSize: '22px', color: '#10B981', marginBottom: '8px' }}>Payment Confirmed!</h3>
-            <p style={{ fontFamily: 'DM Sans', color: '#94A3B8' }}>
-              KES {Number(amount).toLocaleString()} has been added to <strong style={{ color: '#F8FAFC' }}>{chamaName}</strong>
-            </p>
-          </div>
-        )}
+    <p style={{ fontFamily: 'DM Sans', color: '#94A3B8', marginBottom: '20px', fontSize: '14px', lineHeight: 1.6 }}> 
+      A payment prompt of <strong style={{ color: '#10B981' }}>KES {Number(amount).toLocaleString()}</strong>  has been sent 
+    </p> 
+
+    {/* Simulated M-Pesa prompt card */} 
+    <div style={{ 
+      background: 'rgba(16,185,129,0.08)', 
+      border: '1px solid rgba(16,185,129,0.2)', 
+      borderRadius: '16px', 
+      padding: '20px', 
+      marginBottom: '20px', 
+      textAlign: 'left' 
+    }}> 
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}> 
+        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>M</div> 
+        <div> 
+          <p style={{ margin: 0, fontFamily: 'DM Sans', fontSize: '13px', color: '#F8FAFC', fontWeight: 700 }}>M-PESA</p> 
+          <p style={{ margin: 0, fontFamily: 'DM Sans', fontSize: '11px', color: '#64748B' }}>Lipa na M-Pesa</p> 
+        </div> 
+      </div> 
+      <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8', margin: '0 0 6px' }}> 
+        Pay <strong style={{ color: '#F8FAFC' }}>KES {Number(amount).toLocaleString()}</strong>  to 
+      </p> 
+      <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8', margin: '0 0 6px' }}> 
+        <strong style={{ color: '#F8FAFC' }}>ChamaChain - {chamaName}</strong> 
+      </p> 
+      <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#94A3B8', margin: '0 0 12px' }}> 
+        Ref: <strong style={{ color: '#F8FAFC' }}>CC-{chamaId?.toString().slice(-6).toUpperCase()}</strong> 
+      </p> 
+      <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}> 
+        <span style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B' }}>Enter M-Pesa PIN:</span> 
+        <span style={{ fontFamily: 'monospace', fontSize: '16px', color: '#F8FAFC', letterSpacing: '4px' }}>● ● ● ●</span> 
+      </div> 
+    </div> 
+
+    {/* Progress indicator */} 
+    <div style={{ marginBottom: '16px' }}> 
+      <motion.div 
+        animate={{ rotate: 360 }} 
+        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} 
+        style={{ width: '28px', height: '28px', borderRadius: '50%', border: '3px solid rgba(16,185,129,0.2)', borderTop: '3px solid #10B981', margin: '0 auto 10px' }} 
+      /> 
+      <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B' }}> 
+        Waiting for PIN confirmation... 
+      </p> 
+    </div> 
+
+    {/* Countdown */} 
+    <CountdownBar duration={30} onComplete={() => {}} /> 
+
+    <button 
+      onClick={() => { clearInterval(pollRef.current); onClose() }} 
+      style={{ marginTop: '12px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: '13px' }}> 
+      Cancel 
+    </button> 
+  </div> 
+)}
+
+        {step === 'success' && ( 
+  <div style={{ textAlign: 'center', padding: '10px 0' }}> 
+    <motion.div 
+      initial={{ scale: 0 }} 
+      animate={{ scale: 1 }} 
+      transition={{ type: 'spring', stiffness: 200 }} 
+      style={{ fontSize: '56px', marginBottom: '12px' }} 
+    >✅</motion.div> 
+
+    <h3 style={{ fontFamily: 'Syne', fontSize: '22px', color: '#10B981', marginBottom: '8px' }}> 
+      Payment Confirmed! 
+    </h3> 
+
+    {/* Receipt */} 
+    <div style={{ 
+      background: 'rgba(16,185,129,0.08)', 
+      border: '1px solid rgba(16,185,129,0.2)', 
+      borderRadius: '16px', 
+      padding: '20px', 
+      textAlign: 'left', 
+      marginBottom: '20px' 
+    }}> 
+      <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B', margin: '0 0 12px', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.1em' }}>M-Pesa Receipt</p> 
+      {[ 
+        { label: 'Amount', value: `KES ${Number(amount).toLocaleString()}` }, 
+        { label: 'To', value: chamaName }, 
+        { label: 'Status', value: '✅ Confirmed' }, 
+        { label: 'Date', value: new Date().toLocaleDateString('en-KE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) } 
+      ].map((item, i) => ( 
+        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}> 
+          <span style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#64748B' }}>{item.label}</span> 
+          <span style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#F8FAFC', fontWeight: 600 }}>{item.value}</span> 
+        </div> 
+      ))} 
+    </div> 
+
+    <p style={{ fontFamily: 'DM Sans', color: '#64748B', fontSize: '13px' }}> 
+      Closing automatically... 
+    </p> 
+  </div> 
+)}
 
         {step === 'failed' && (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
