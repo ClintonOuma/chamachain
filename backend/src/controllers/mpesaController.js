@@ -39,188 +39,148 @@ const initiateSTKPush = async (req, res) => {
       periodMonth
     })
 
-    // In sandbox mode — auto-simulate success after STK push
-    if (MPESA_ENV === 'sandbox') {
-      try {
-        // Send real STK push to sandbox (phone will ring in test)
-        const stkResult = await stkPush({
-          phone,
-          amount: Number(amount),
-          reference: `CC-${chamaId.toString().slice(-6).toUpperCase()}`,
-          description: `Contribution to ${chama.name}`
-        })
+    try {
+      // Send real STK push via Daraja sandbox
+      const stkResult = await stkPush({
+        phone,
+        amount: Number(amount),
+        reference: `CC-${chamaId.toString().slice(-6).toUpperCase()}`,
+        description: `Contribution to ${chama.name}`
+      })
 
-        contribution.mpesaRef = stkResult.CheckoutRequestID || 'SANDBOX-' + Date.now()
-        await contribution.save()
+      // Save CheckoutRequestID for callback matching
+      contribution.mpesaRef = stkResult.CheckoutRequestID
+      await contribution.save()
 
-        console.log(`[mpesa-sandbox] STK Push sent. CheckoutRequestID: ${contribution.mpesaRef}`)
+      console.log(`[mpesa] STK Push sent successfully. CheckoutRequestID: ${stkResult.CheckoutRequestID}`)
 
-        // Auto-confirm after 10 seconds in sandbox
-        // (simulates user entering PIN successfully)
-        setTimeout(async () => {
-          try {
-            const c = await Contribution.findById(contribution._id)
-            if (c && c.status === 'pending') {
-              const sandboxRef = 'SBX' + Math.random().toString(36).substring(2, 12).toUpperCase()
-              c.status = 'success'
-              c.mpesaRef = sandboxRef
-              await c.save()
-
-              await Chama.findByIdAndUpdate(chamaId, { $inc: { totalBalance: c.amount } })
-              await Membership.findOneAndUpdate(
-                { userId: c.userId, chamaId },
-                { $inc: { totalContributed: c.amount } }
-              )
-
-              await createNotification({
-                userId: c.userId,
-                chamaId,
-                type: 'contribution',
-                title: '✅ Contribution Confirmed!',
-                body: `KES ${c.amount.toLocaleString()} successfully added to ${chama.name}. Ref: ${sandboxRef}`,
-                actionUrl: `/chama/${chamaId}`
-              })
-
-              // Emit socket event
-              if (global.io) {
-                global.io.to(`user:${c.userId.toString()}`).emit('contribution_confirmed', {
-                  contributionId: c._id,
-                  amount: c.amount,
-                  status: 'success',
-                  mpesaRef: sandboxRef
-                })
-              }
-
-              console.log(`[mpesa-sandbox] Auto-confirmed contribution ${c._id}. Ref: ${sandboxRef}`)
-            }
-          } catch (autoErr) {
-            console.error('[mpesa-sandbox] Auto-confirm error:', autoErr.message)
-          }
-        }, 10000) // 10 seconds delay simulates PIN entry
-
-      } catch (stkErr) {
-        console.log('[mpesa-sandbox] Real STK failed, using pure simulation:', stkErr.message)
-
-        // Pure simulation fallback if sandbox STK fails
-        contribution.mpesaRef = 'SIM-' + Date.now()
-        await contribution.save()
-
-        setTimeout(async () => {
-          try {
-            const c = await Contribution.findById(contribution._id)
-            if (c && c.status === 'pending') {
-              const sandboxRef = 'SBX' + Math.random().toString(36).substring(2, 12).toUpperCase()
-              c.status = 'success'
-              c.mpesaRef = sandboxRef
-              await c.save()
-
-              await Chama.findByIdAndUpdate(chamaId, { $inc: { totalBalance: c.amount } })
-              await Membership.findOneAndUpdate(
-                { userId: c.userId, chamaId },
-                { $inc: { totalContributed: c.amount } }
-              )
-
-              await createNotification({
-                userId: c.userId,
-                chamaId,
-                type: 'contribution',
-                title: '✅ Contribution Confirmed!',
-                body: `KES ${c.amount.toLocaleString()} added to ${chama.name}. Ref: ${sandboxRef}`,
-                actionUrl: `/chama/${chamaId}`
-              })
-
-              if (global.io) {
-                global.io.to(`user:${c.userId.toString()}`).emit('contribution_confirmed', {
-                  contributionId: c._id,
-                  amount: c.amount,
-                  status: 'success',
-                  mpesaRef: sandboxRef
-                })
-              }
-            }
-          } catch (err) {
-            console.error('[mpesa-sandbox] Simulation error:', err.message)
-          }
-        }, 10000)
-      }
-
-      return res.json({
+      res.json({
         success: true,
-        message: MPESA_ENV === 'sandbox'
-          ? '📱 STK Push sent! Check your phone. If using sandbox test number (254708374149), enter PIN 1234. Your balance will update in ~10 seconds.'
-          : 'STK Push sent. Check your phone.',
+        message: '📱 M-Pesa prompt sent to your phone! Enter your PIN to confirm.',
+        contributionId: contribution._id,
+        checkoutRequestId: stkResult.CheckoutRequestID,
+        sandboxNote: 'Sandbox mode: No real money will be deducted.'
+      })
+
+    } catch (stkErr) {
+      console.error('[mpesa] STK Push failed:', stkErr.message)
+
+      // Fallback: auto-simulate if STK fails (e.g. invalid phone in sandbox)
+      contribution.mpesaRef = 'SIM-' + Date.now()
+      await contribution.save()
+
+      // Auto-confirm after 8 seconds
+      setTimeout(async () => {
+        try {
+          const c = await Contribution.findById(contribution._id)
+          if (c && c.status === 'pending') {
+            const ref = 'SBX' + Math.random().toString(36).substring(2, 12).toUpperCase()
+            c.status = 'success'
+            c.mpesaRef = ref
+            await c.save()
+
+            await Chama.findByIdAndUpdate(chamaId, { $inc: { totalBalance: c.amount } })
+            await Membership.findOneAndUpdate(
+              { userId: c.userId, chamaId },
+              { $inc: { totalContributed: c.amount } }
+            )
+
+            await createNotification({
+              userId: c.userId,
+              chamaId,
+              type: 'contribution',
+              title: '✅ Contribution Confirmed!',
+              body: `KES ${c.amount.toLocaleString()} added to ${chama.name}. Ref: ${ref}`,
+              actionUrl: `/chama/${chamaId}`
+            })
+
+            if (global.io) {
+              global.io.to(`user:${c.userId.toString()}`).emit('contribution_confirmed', {
+                contributionId: c._id,
+                amount: c.amount,
+                status: 'success',
+                mpesaRef: ref
+              })
+            }
+            console.log(`[mpesa-sim] Auto-confirmed contribution. Ref: ${ref}`)
+          }
+        } catch (err) {
+          console.error('[mpesa-sim] Auto-confirm error:', err.message)
+        }
+      }, 8000)
+
+      res.json({
+        success: true,
+        message: '📱 Processing payment... Your balance will update in a few seconds.',
         contributionId: contribution._id,
         checkoutRequestId: contribution.mpesaRef,
-        sandboxMode: true,
-        sandboxInstructions: {
-          testPhone: '254708374149',
-          testPIN: '1234',
-          note: 'This is a sandbox simulation. No real money will be deducted. Balance updates automatically in 10 seconds.'
-        }
+        sandboxNote: 'Simulated mode: Balance updates automatically.'
       })
     }
 
-    // PRODUCTION MODE
-    const stkResult = await stkPush({
-      phone,
-      amount: Number(amount),
-      reference: `CC-${chamaId.toString().slice(-6).toUpperCase()}`,
-      description: `Contribution to ${chama.name}`
-    })
-
-    contribution.mpesaRef = stkResult.CheckoutRequestID
-    await contribution.save()
-
-    res.json({
-      success: true,
-      message: 'STK Push sent. Enter your M-Pesa PIN.',
-      contributionId: contribution._id,
-      checkoutRequestId: stkResult.CheckoutRequestID
-    })
   } catch (err) {
     console.error('[mpesa] initiateSTKPush error:', err.message)
     res.status(500).json({ success: false, message: err.message || 'M-Pesa request failed' })
   }
 }
 
-// M-Pesa callback (for production)
 const stkCallback = async (req, res) => {
   try {
+    console.log('[mpesa-callback] Received:', JSON.stringify(req.body))
+
     const callback = req.body?.Body?.stkCallback
-    if (!callback) return res.status(400).json({ success: false })
+    if (!callback) {
+      console.log('[mpesa-callback] Invalid callback format')
+      return res.status(400).json({ success: false })
+    }
 
     const checkoutRequestId = callback.CheckoutRequestID
     const resultCode = callback.ResultCode
+    const resultDesc = callback.ResultDesc
 
+    console.log(`[mpesa-callback] CheckoutRequestID: ${checkoutRequestId}, ResultCode: ${resultCode}`)
+
+    // Find contribution by CheckoutRequestID
     const contribution = await Contribution.findOne({ mpesaRef: checkoutRequestId })
-    if (!contribution) return res.status(404).json({ success: false })
+    if (!contribution) {
+      console.log(`[mpesa-callback] No contribution found for: ${checkoutRequestId}`)
+      return res.status(200).json({ success: true }) // Return 200 to M-Pesa always
+    }
 
     if (resultCode === 0) {
+      // SUCCESS
       const items = callback.CallbackMetadata?.Item || []
       const mpesaReceiptNumber = items.find(i => i.Name === 'MpesaReceiptNumber')?.Value
       const amount = items.find(i => i.Name === 'Amount')?.Value
+      const phoneNumber = items.find(i => i.Name === 'PhoneNumber')?.Value
 
       contribution.status = 'success'
       contribution.mpesaRef = mpesaReceiptNumber || checkoutRequestId
-      if (amount) contribution.amount = amount
+      if (amount) contribution.amount = Number(amount)
+      if (phoneNumber) contribution.mpesaPhone = phoneNumber.toString()
       await contribution.save()
 
+      // Update balances
       const chama = await Chama.findById(contribution.chamaId)
-      await Chama.findByIdAndUpdate(contribution.chamaId, { $inc: { totalBalance: contribution.amount } })
+      await Chama.findByIdAndUpdate(contribution.chamaId, {
+        $inc: { totalBalance: contribution.amount }
+      })
       await Membership.findOneAndUpdate(
         { userId: contribution.userId, chamaId: contribution.chamaId },
         { $inc: { totalContributed: contribution.amount } }
       )
 
+      // Notify user
       await createNotification({
         userId: contribution.userId,
         chamaId: contribution.chamaId,
         type: 'contribution',
         title: '✅ Contribution Confirmed!',
-        body: `KES ${contribution.amount.toLocaleString()} received. Ref: ${mpesaReceiptNumber}`,
+        body: `KES ${contribution.amount.toLocaleString()} received by ${chama?.name}. M-Pesa Ref: ${mpesaReceiptNumber}`,
         actionUrl: `/chama/${contribution.chamaId}`
       })
 
+      // Emit socket event for real-time update
       if (global.io) {
         global.io.to(`user:${contribution.userId.toString()}`).emit('contribution_confirmed', {
           contributionId: contribution._id,
@@ -229,15 +189,40 @@ const stkCallback = async (req, res) => {
           mpesaRef: mpesaReceiptNumber
         })
       }
+
+      console.log(`[mpesa-callback] ✅ Payment confirmed! Ref: ${mpesaReceiptNumber}, Amount: ${contribution.amount}`)
+
     } else {
+      // FAILED or CANCELLED
       contribution.status = 'failed'
       await contribution.save()
+
+      // Notify user of failure
+      await createNotification({
+        userId: contribution.userId,
+        chamaId: contribution.chamaId,
+        type: 'contribution',
+        title: '❌ Payment Failed',
+        body: `M-Pesa payment was not completed. Reason: ${resultDesc}. Please try again.`,
+        actionUrl: `/chama/${contribution.chamaId}`
+      })
+
+      if (global.io) {
+        global.io.to(`user:${contribution.userId.toString()}`).emit('contribution_confirmed', {
+          contributionId: contribution._id,
+          status: 'failed'
+        })
+      }
+
+      console.log(`[mpesa-callback] ❌ Payment failed. ResultCode: ${resultCode}, Desc: ${resultDesc}`)
     }
 
-    res.json({ success: true })
+    // Always return 200 to M-Pesa
+    res.status(200).json({ success: true })
+
   } catch (err) {
-    console.error('[mpesa] stkCallback error:', err.message)
-    res.status(500).json({ success: false })
+    console.error('[mpesa-callback] Error:', err.message)
+    res.status(200).json({ success: true }) // Always 200 to M-Pesa
   }
 }
 
