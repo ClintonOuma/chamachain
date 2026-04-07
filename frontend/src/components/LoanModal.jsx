@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
-
-const AI_URL = import.meta.env.VITE_AI_URL || 'http://127.0.0.1:8000'
+import { getAiServiceUrl } from '../config/apiBase'
 
 function CountdownBar({ duration, onComplete }) { 
   const [timeLeft, setTimeLeft] = useState(duration) 
@@ -162,7 +161,8 @@ export default function LoanModal({ chamaId, chamaName, membership, onClose, onS
   useEffect(() => {
     const fetchScore = async () => {
       try {
-        const userId = user?.id || user?. _id
+        const AI_URL = getAiServiceUrl()
+        const userId = user?.id || user?._id
         const res = await fetch(`${AI_URL}/ai/credit-score/${userId}/${chamaId}`)
         const data = await res.json()
         if (data.success) setCreditScore(data.data.score)

@@ -16,42 +16,33 @@ function toObjectId(id) {
 const getCreditScore = async (req, res) => {
   try {
     const { userId, chamaId } = req.params
-    
-    const response = await axios.get(`${AI_SERVICE_URL}/ai/credit-score/${userId}/${chamaId}`)
-    return res.json({
-      success: true,
-      analysis: response.data.analysis
-    })
+    const response = await axios.get(`${AI_SERVICE_URL}/ai/credit-score/${userId}/${chamaId}`, { timeout: 30000 })
+    return res.json(response.data)
   } catch (err) {
     console.error('AI Service Error:', err.message)
-    // Fallback logic if AI service is down
-    return res.status(500).json({ success: false, message: 'AI Service currently unavailable' })
+    return res.status(503).json({ success: false, message: 'AI service unavailable. Please try again in 30 seconds.' })
   }
 }
 
 const getGroupHealth = async (req, res) => {
   try {
     const { chamaId } = req.params
-    const response = await axios.get(`${AI_SERVICE_URL}/ai/group-health/${chamaId}`)
-    return res.json({
-      success: true,
-      health: response.data.health
-    })
+    const response = await axios.get(`${AI_SERVICE_URL}/ai/group-health/${chamaId}`, { timeout: 30000 })
+    return res.json(response.data)
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'AI Service currently unavailable' })
+    console.error('AI group-health error:', err.message)
+    return res.status(503).json({ success: false, message: 'AI service unavailable. Please try again.' })
   }
 }
 
 const getLoanRisk = async (req, res) => {
   try {
     const { loanId } = req.params
-    const response = await axios.get(`${AI_SERVICE_URL}/ai/loan-risk/${loanId}`)
-    return res.json({
-      success: true,
-      risk: response.data.risk
-    })
+    const response = await axios.get(`${AI_SERVICE_URL}/ai/loan-risk/${loanId}`, { timeout: 30000 })
+    return res.json(response.data)
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'AI Service currently unavailable' })
+    console.error('AI loan-risk error:', err.message)
+    return res.status(503).json({ success: false, message: 'AI service unavailable. Please try again.' })
   }
 }
 
