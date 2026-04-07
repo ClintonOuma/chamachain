@@ -406,7 +406,7 @@ function LoansTab({ loans, myLoans, membership, chamaId, canRequestLoan, canAppr
                   <button
                     onClick={async () => {
                       if (window.confirm('Approve this loan?')) {
-                        await api.patch(`/loans/${loan._id}/approve`)
+                        await api.patch(`/loans/${chamaId}/loans/${loan._id}/approve`)
                         window.location.reload()
                       }
                     }}
@@ -415,7 +415,7 @@ function LoansTab({ loans, myLoans, membership, chamaId, canRequestLoan, canAppr
                   <button
                     onClick={async () => {
                       if (window.confirm('Reject this loan?')) {
-                        await api.patch(`/loans/${loan._id}/reject`)
+                        await api.patch(`/loans/${chamaId}/loans/${loan._id}/reject`)
                         window.location.reload()
                       }
                     }}
@@ -832,6 +832,7 @@ export default function ChamaDetailPage() {
     { name: 'Members', icon: Users, component: MembersTab, props: { members, membership, chamaId, user, isAdmin, isTreasurer, isMember, isObserver, canManage, canViewFinances, canContribute, canRequestLoan, canApproveLoan, chama } },
     { name: 'Contributions', icon: Wallet, component: ContributionsTab, props: { contributions, chamaId, onContribute: () => setShowContribute(true), canContribute, canViewFinances } },
     { name: 'Loans', icon: CreditCard, component: LoansTab, props: { loans, myLoans, membership, chamaId, canRequestLoan, canApproveLoan, canViewFinances, onRequestLoan: () => setShowLoan(true), onRepayLoan: (loanId) => { setSelectedLoanId(loanId); setIsRepayLoanModalOpen(true) } } },
+    { name: 'Votes', icon: CheckCircle2, component: VotesTab, props: { chama, chamaId, pendingLoans, setPendingLoans, voteStatuses, setVoteStatuses, isAdmin, membership, canApproveLoan } },
     { name: 'Settings', icon: Settings, component: SettingsTab, props: { chama, chamaId, isAdmin, members } },
   ];
 

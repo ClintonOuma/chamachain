@@ -5,6 +5,12 @@ const requireRole = (...roles) => {
     try {
       const chamaId = req.params.chamaId || req.body.chamaId
       if (!chamaId) return res.status(400).json({ success: false, message: 'chamaId required' })
+
+      // Super admins bypass role checks
+      if (req.user?.isSuperAdmin) {
+        return next()
+      }
+
       const membership = await Membership.findOne({
         userId: req.user.userId,
         chamaId,

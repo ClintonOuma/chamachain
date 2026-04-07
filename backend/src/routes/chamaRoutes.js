@@ -23,6 +23,12 @@ router.patch('/:chamaId/transfer-admin/:userId', protect, requireRole('admin'), 
 router.get('/:chamaId/my-role', protect, async (req, res) => {
   try {
     const Membership = require('../models/Membership')
+    
+    // Super admins are effectively admins of all chamas
+    if (req.user?.isSuperAdmin) {
+      return res.json({ success: true, role: 'admin' })
+    }
+
     const membership = await Membership.findOne({
       userId: req.user.userId,
       chamaId: req.params.chamaId,

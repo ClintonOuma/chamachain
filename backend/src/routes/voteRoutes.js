@@ -117,6 +117,7 @@ router.post('/:chamaId/vote/:loanId', protect, async (req, res) => {
     const threshold = chama?.settings?.loanVoteThreshold || 51
     const yesVotes = loan.votes.filter(v => v.support).length
     const totalVotes = loan.votes.length
+    const noVotes = totalVotes - yesVotes
     const yesPercent = (yesVotes / totalVotes) * 100
 
     if (totalVotes >= Math.ceil(totalMembers * 0.5)) {
