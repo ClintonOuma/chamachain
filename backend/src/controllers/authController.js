@@ -158,6 +158,7 @@ const login = async (req, res) => {
     const refreshToken = generateRefreshToken(user._id)
     const refreshTokenHash = await bcrypt.hash(refreshToken, 10)
     user.refreshTokenHash = refreshTokenHash
+    user.lastLoginAt = new Date()
     await user.save()
     const userObj = {
       id: String(user._id),

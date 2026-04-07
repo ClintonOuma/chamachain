@@ -16,6 +16,7 @@ const chamaSchema = new mongoose.Schema({
   inviteCode: { type: String, unique: true, default: generateInviteCode },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   status: { type: String, enum: ['active', 'frozen', 'archived'], default: 'active' },
+  frozenReason: { type: String, default: '' },
   settings: {
     minContribution: { type: Number, default: 500 },
     contributionFrequency: { type: String, enum: ['weekly', 'monthly'], default: 'monthly' },

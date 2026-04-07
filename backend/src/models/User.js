@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
   otpHash: { type: String, default: null },
   otpExpiry: { type: Date, default: null },
   refreshTokenHash: { type: String, default: null },
+  lastLoginAt: { type: Date, default: null },
   notificationPrefs: {
     sms: { type: Boolean, default: true },
     whatsapp: { type: Boolean, default: true },

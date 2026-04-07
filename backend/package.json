@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "flush": "node src/scripts/flushDb.js"
+    "flush": "node src/scripts/flushDb.js",
+    "make-super-admin": "node src/scripts/makeSuperAdmin.js"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
