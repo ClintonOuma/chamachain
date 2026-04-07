@@ -966,6 +966,30 @@ export default function ChamaDetailPage() {
           </div>
         </div>
 
+        {/* Add this right after the header section, before tabs */}
+        {chama?.status === 'frozen' && (
+          <div style={{
+            background: 'rgba(239,68,68,0.1)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: '12px',
+            padding: '14px 20px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <span style={{ fontSize: '20px' }}>❄️</span>
+            <div>
+              <p style={{ margin: 0, fontFamily: 'DM Sans', color: '#EF4444', fontWeight: 600, fontSize: '14px' }}>
+                This chama is currently frozen
+              </p>
+              <p style={{ margin: '2px 0 0', fontFamily: 'DM Sans', color: '#94A3B8', fontSize: '13px' }}>
+                Contributions and loan requests are disabled. Contact your admin.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '32px' }}>
           {TABS.map((tab, i) => (

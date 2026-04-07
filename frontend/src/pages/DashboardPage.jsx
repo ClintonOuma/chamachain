@@ -7,7 +7,8 @@ import { useState, useEffect } from 'react'
  import ContributeModal from '../components/ContributeModal' 
  import LoanModal from '../components/LoanModal' 
  import api from '../services/api' 
- import useAuthStore from '../store/authStore' 
+ import useAuthStore from '../store/authStore'
+import usePageTitle from '../hooks/usePageTitle' 
  
  function StatCard({ label, value, icon, color, delay }) { 
    return ( 
@@ -35,7 +36,8 @@ import { useState, useEffect } from 'react'
    ) 
  } 
  
- export default function DashboardPage() { 
+ export default function DashboardPage() {
+  usePageTitle('Dashboard') 
    const navigate = useNavigate() 
    const { user } = useAuthStore() 
    const [chamas, setChamas] = useState([]) 
@@ -53,11 +55,17 @@ import { useState, useEffect } from 'react'
    const [activeFilter, setActiveFilter] = useState('all') 
  
    useEffect(() => { 
-     const hour = new Date().getHours() 
-     if (hour < 12) setGreeting('Good morning') 
-     else if (hour < 17) setGreeting('Good afternoon') 
-     else setGreeting('Good evening') 
-   }, []) 
+  const hour = new Date().toLocaleString('en-KE', { 
+    timeZone: 'Africa/Nairobi', 
+    hour: 'numeric', 
+    hour12: false 
+  }) 
+  const h = parseInt(hour) 
+  if (h >= 5 && h < 12) setGreeting('Good morning') 
+  else if (h >= 12 && h < 17) setGreeting('Good afternoon') 
+  else if (h >= 17 && h < 21) setGreeting('Good evening') 
+  else setGreeting('Good night') 
+}, []) 
  
    useEffect(() => { 
      fetchDashboardData() 

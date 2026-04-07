@@ -27,20 +27,18 @@ export default function Sidebar() {
     navigate('/')
   }
 
+  // Make sure initials are generated correctly
   const getInitials = (name) => {
     if (!name) return 'U'
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    const parts = name.trim().split(' ').filter(Boolean)
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    return parts[0].slice(0, 2).toUpperCase()
   }
 
-  // Gradient colors matching Apple's liquid glass blue tints
-  const avatarColors = [
-    'linear-gradient(135deg, rgba(74,195,255,0.75), rgba(94,92,230,0.75))',
-    'linear-gradient(135deg, rgba(94,92,230,0.75), rgba(74,195,255,0.75))',
-    'linear-gradient(135deg, rgba(50,215,75,0.75), rgba(74,195,255,0.75))',
-    'linear-gradient(135deg, rgba(255,214,10,0.75), rgba(255,149,0,0.75))',
-    'linear-gradient(135deg, rgba(255,69,58,0.75), rgba(255,149,0,0.75))',
-  ]
-  const avatarGradient = avatarColors[(user?.fullName?.charCodeAt(0) || 0) % avatarColors.length]
+  // Avatar color based on name
+  const avatarColors = ['#0EA5E9', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899']
+  const colorIndex = user?.fullName ? user.fullName.charCodeAt(0) % avatarColors.length : 0
+  const avatarColor = avatarColors[colorIndex]
 
   return (
     <>
@@ -230,7 +228,7 @@ export default function Sidebar() {
             width: '34px',
             height: '34px',
             borderRadius: '50%',
-            background: avatarGradient,
+            background: avatarColor,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -238,8 +236,6 @@ export default function Sidebar() {
             fontWeight: 700,
             color: 'rgba(255,255,255,0.95)',
             flexShrink: 0,
-            border: '1px solid rgba(255,255,255,0.25)',
-            boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.35)',
           }}>
             {getInitials(user?.fullName)}
           </div>

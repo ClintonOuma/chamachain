@@ -8,9 +8,11 @@ import { useState, useEffect } from 'react'
  import ContributeModal from '../components/ContributeModal' 
  import LoanModal from '../components/LoanModal' 
  import api from '../services/api' 
- import useAuthStore from '../store/authStore' 
+ import useAuthStore from '../store/authStore'
+import usePageTitle from '../hooks/usePageTitle' 
  
- export default function ChamasPage() { 
+ export default function ChamasPage() {
+  usePageTitle('My Chamas') 
    const [chamas, setChamas] = useState([]) 
    const [loading, setLoading] = useState(true) 
    const [showCreate, setShowCreate] = useState(false) 
