@@ -14,12 +14,7 @@ app.set('trust proxy', 1)
 
 app.use(helmet()) 
 app.use(cors({ 
-  origin: [ 
-    'http://localhost:5173', 
-    'http://127.0.0.1:5173', 
-    'https://chamachain-nine.vercel.app', 
-    process.env.FRONTEND_URL 
-  ].filter(Boolean), 
+  origin: true,
   credentials: true, 
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 
   allowedHeaders: ['Content-Type', 'Authorization'] 
@@ -30,11 +25,7 @@ const server = http.createServer(app)
 
 const io = new Server(server, { 
   cors: { 
-    origin: [ 
-      'http://localhost:5173', 
-      'https://chamachain-nine.vercel.app', 
-      process.env.FRONTEND_URL 
-    ].filter(Boolean), 
+    origin: true,
     methods: ['GET', 'POST'] 
   } 
 }) 
