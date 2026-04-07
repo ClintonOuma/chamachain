@@ -106,7 +106,7 @@ const verifyOTP = async (req, res) => {
     user.otpHash = null;
     user.otpExpiry = null;
 
-    const accessToken = generateAccessToken(user._id.toString(), null);
+    const accessToken = generateAccessToken(user._id.toString(), user.isSuperAdmin ? 'admin' : 'member', user.isSuperAdmin);
     const refreshToken = generateRefreshToken(user._id.toString());
     user.refreshTokenHash = await bcrypt.hash(refreshToken, 12);
 
@@ -118,6 +118,7 @@ const verifyOTP = async (req, res) => {
       email: user.email,
       phone: user.phone,
       avatar: user.avatar,
+      isSuperAdmin: user.isSuperAdmin,
       notificationPrefs: user.notificationPrefs
     };
 
@@ -261,7 +262,7 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    const accessToken = generateAccessToken(user._id.toString(), null);
+    const accessToken = generateAccessToken(user._id.toString(), user.isSuperAdmin ? 'admin' : 'member', user.isSuperAdmin);
 
     return res.json({ success: true, accessToken });
   } catch (err) {

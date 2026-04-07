@@ -3,6 +3,7 @@ const Chama = require('../models/Chama')
 const Membership = require('../models/Membership')
 const Contribution = require('../models/Contribution')
 const Loan = require('../models/Loan')
+const AuditLog = require('../models/AuditLog')
 const { logAction } = require('../services/auditService')
 
 // Platform analytics
@@ -195,4 +196,59 @@ const revokeSuperAdmin = async (req, res) => {
   }
 }
 
-module.exports = { getStats, getAllUsers, getAllChamas, suspendUser, unsuspendUser, freezeAnyChama, deleteUser, promoteSuperAdmin, revokeSuperAdmin }
+// Get system audit logs
+const getAuditLogs = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 50
+    const [logs, total] = await Promise.all([
+      AuditLog.find()
+        .populate('performedBy', 'fullName email')
+        .populate('chamaId', 'name')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      AuditLog.countDocuments()
+    ])
+    res.json({ success: true, logs, total, page, pages: Math.ceil(total / limit) })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+// Get all transactions (Contributions + Loans)
+const getAllTransactions = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 50
+    
+    const [contributions, loans] = await Promise.all([
+      Contribution.find()
+        .populate('userId', 'fullName email')
+        .populate('chamaId', 'name')
+        .sort({ createdAt: -1 })
+        .limit(100),
+      Loan.find()
+        .populate('userId', 'fullName email')
+        .populate('chamaId', 'name')
+        .sort({ createdAt: -1 })
+        .limit(100)
+    ])
+
+    // Combine and sort
+    const all = [
+      ...contributions.map(c => ({ ...c.toObject(), type: 'contribution' })),
+      ...loans.map(l => ({ ...l.toObject(), type: 'loan' }))
+    ].sort((a, b) => b.createdAt - a.createdAt)
+
+    res.json({ success: true, transactions: all.slice((page - 1) * limit, page * limit), total: all.length })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+module.exports = { 
+  getStats, getAllUsers, getAllChamas, suspendUser, unsuspendUser, 
+  freezeAnyChama, deleteUser, promoteSuperAdmin, revokeSuperAdmin,
+  getAuditLogs, getAllTransactions
+}

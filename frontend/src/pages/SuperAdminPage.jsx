@@ -11,6 +11,8 @@ export default function SuperAdminPage() {
   const [stats, setStats] = useState(null)
   const [users, setUsers] = useState([])
   const [chamas, setChamas] = useState([])
+  const [transactions, setTransactions] = useState([])
+  const [logs, setLogs] = useState([])
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -27,19 +29,27 @@ export default function SuperAdminPage() {
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [activeTab])
 
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [statsRes, usersRes, chamasRes] = await Promise.all([
-        api.get('/super-admin/stats'),
-        api.get('/super-admin/users'),
-        api.get('/super-admin/chamas')
-      ])
-      setStats(statsRes.data.stats)
-      setUsers(usersRes.data.users || [])
-      setChamas(chamasRes.data.chamas || [])
+      if (activeTab === 'overview') {
+        const res = await api.get('/super-admin/stats')
+        setStats(res.data.stats)
+      } else if (activeTab === 'users') {
+        const res = await api.get('/super-admin/users')
+        setUsers(res.data.users || [])
+      } else if (activeTab === 'chamas') {
+        const res = await api.get('/super-admin/chamas')
+        setChamas(res.data.chamas || [])
+      } else if (activeTab === 'transactions') {
+        const res = await api.get('/super-admin/transactions')
+        setTransactions(res.data.transactions || [])
+      } else if (activeTab === 'logs') {
+        const res = await api.get('/super-admin/logs')
+        setLogs(res.data.logs || [])
+      }
     } catch (err) {
       console.error(err)
       if (err.response?.status === 403) navigate('/dashboard')
@@ -120,7 +130,7 @@ export default function SuperAdminPage() {
     c.name?.toLowerCase().includes(search.toLowerCase())
   )
 
-  const tabs = ['overview', 'users', 'chamas']
+  const tabs = ['overview', 'users', 'chamas', 'transactions', 'logs']
 
   return (
     <div style={{ minHeight: '100vh', background: '#0D0B1E' }}>
@@ -341,6 +351,69 @@ export default function SuperAdminPage() {
                   </table>
                 </div>
               </>
+            )}
+
+            {/* TRANSACTIONS TAB */}
+            {activeTab === 'transactions' && (
+              <div className="glass-card" style={{ overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                      {['Type', 'User', 'Chama', 'Amount', 'Status', 'Date'].map(h => (
+                        <th key={h} style={{ padding: '16px', textAlign: 'left', fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B', textTransform: 'uppercase' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map((tx, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td style={{ padding: '14px 16px' }}>
+                          <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontFamily: 'DM Sans', background: tx.type === 'contribution' ? 'rgba(16,185,129,0.1)' : 'rgba(14,165,233,0.1)', color: tx.type === 'contribution' ? '#10B981' : '#0EA5E9', textTransform: 'capitalize' }}>
+                            {tx.type}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'DM Sans', color: '#F8FAFC', fontSize: '14px' }}>{tx.userId?.fullName}</td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'DM Sans', color: '#94A3B8', fontSize: '14px' }}>{tx.chamaId?.name}</td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'Syne', color: '#F8FAFC', fontWeight: 600 }}>KES {tx.amount.toLocaleString()}</td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <span style={{ fontSize: '12px', color: tx.status === 'success' || tx.status === 'disbursed' ? '#10B981' : tx.status === 'failed' ? '#EF4444' : '#F59E0B' }}>
+                            {tx.status}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'DM Sans', color: '#64748B', fontSize: '13px' }}>{new Date(tx.createdAt).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* LOGS TAB */}
+            {activeTab === 'logs' && (
+              <div className="glass-card" style={{ overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                      {['Action', 'Performed By', 'Chama', 'Date', 'Details'].map(h => (
+                        <th key={h} style={{ padding: '16px', textAlign: 'left', fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B', textTransform: 'uppercase' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.map((log, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td style={{ padding: '14px 16px', fontFamily: 'DM Sans', color: '#F59E0B', fontWeight: 600, fontSize: '13px' }}>{log.action}</td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'DM Sans', color: '#F8FAFC', fontSize: '14px' }}>{log.performedBy?.fullName}</td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'DM Sans', color: '#94A3B8', fontSize: '14px' }}>{log.chamaId?.name || '-'}</td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'DM Sans', color: '#64748B', fontSize: '13px' }}>{new Date(log.createdAt).toLocaleString()}</td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'DM Sans', color: '#64748B', fontSize: '12px' }}>
+                          {Object.entries(log.metadata || {}).filter(([k]) => k !== 'timestamp').map(([k, v]) => `${k}: ${v}`).join(', ')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </>
         )}
