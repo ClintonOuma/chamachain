@@ -58,6 +58,7 @@ const mpesaRoutes = require('./routes/mpesaRoutes')
 const voteRoutes = require('./routes/voteRoutes') 
 const reportRoutes = require('./routes/reportRoutes') 
 const superAdminRoutes = require('./routes/superAdminRoutes') 
+const invitationRoutes = require('./routes/invitationRoutes')
 
 app.use('/api/v1/auth', authRoutes)
 app.use('/api/v1/chamas', chamaRoutes)
@@ -70,6 +71,7 @@ app.use('/api/v1/mpesa', mpesaRoutes)
 app.use('/api/v1/votes', voteRoutes)
 app.use('/api/v1/reports', reportRoutes)
 app.use('/api/v1/super-admin', superAdminRoutes) 
+app.use('/api/v1/invitation', invitationRoutes)
 
 app.get('/api/v1/health', (req, res) => { 
   res.json({ success: true, message: 'ChamaChain API running', timestamp: new Date() }) 

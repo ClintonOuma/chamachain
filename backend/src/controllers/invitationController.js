@@ -5,7 +5,7 @@ const User = require('../models/User');
 const joinChamaByCode = async (req, res) => {
   try {
     const { inviteCode, role = 'member' } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     if (!inviteCode) {
       return res.status(400).json({
@@ -109,12 +109,13 @@ const getChamaByInviteCode = async (req, res) => {
 const regenerateInviteCode = async (req, res) => {
   try {
     const { chamaId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     const membership = await Membership.findOne({
       userId,
       chamaId,
-      role: 'admin'
+      role: 'admin',
+      status: 'active'
     });
 
     if (!membership) {

@@ -1,43 +1,14 @@
 const express = require('express')
 const router = express.Router()
 const { protect } = require('../middleware/auth')
+const { getCreditScore, getGroupHealth, getLoanRisk } = require('../controllers/aiController')
 const axios = require('axios')
 
 const AI_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
 
-router.get('/credit-score/:userId/:chamaId', protect, async (req, res) => {
-  try {
-    const { userId, chamaId } = req.params
-    const response = await axios.get(
-      `${AI_URL}/ai/credit-score/${userId}/${chamaId}`,
-      { timeout: 30000 }
-    )
-    res.json(response.data)
-  } catch (err) {
-    console.error('AI credit-score error:', err.message)
-    res.status(503).json({
-      success: false,
-      message: 'AI service unavailable. Please try again in 30 seconds.'
-    })
-  }
-})
-
-router.get('/group-health/:chamaId', protect, async (req, res) => {
-  try {
-    const { chamaId } = req.params
-    const response = await axios.get(
-      `${AI_URL}/ai/group-health/${chamaId}`,
-      { timeout: 30000 }
-    )
-    res.json(response.data)
-  } catch (err) {
-    console.error('AI group-health error:', err.message)
-    res.status(503).json({
-      success: false,
-      message: 'AI service unavailable. Please try again.'
-    })
-  }
-})
+router.get('/credit-score/:userId/:chamaId', protect, getCreditScore)
+router.get('/group-health/:chamaId', protect, getGroupHealth)
+router.get('/loan-risk/:loanId', protect, getLoanRisk)
 
 router.get('/health', async (req, res) => {
   try {

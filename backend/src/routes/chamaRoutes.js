@@ -5,9 +5,9 @@ const { requireRole } = require('../middleware/rbac');
 const {
   createChama, getMyChamas, getChamaById,
   updateChama, joinChama, getMembers,
-  changeMemberRole, removeMember, freezeChama, transferAdmin
+  changeMemberRole, removeMember, freezeChama, transferAdmin,
+  getMyRole, getAuditLogs, getLeaderboard
 } = require('../controllers/chamaController');
-const AuditLog = require('../models/AuditLog')
 
 router.post('/', protect, createChama);
 router.get('/', protect, getMyChamas);
@@ -19,55 +19,8 @@ router.patch('/:chamaId/members/:userId/role', protect, requireRole('admin'), ch
 router.delete('/:chamaId/members/:userId', protect, requireRole('admin'), removeMember);
 router.patch('/:chamaId/freeze', protect, requireRole('admin'), freezeChama)
 router.patch('/:chamaId/transfer-admin/:userId', protect, requireRole('admin'), transferAdmin)
-
-router.get('/:chamaId/my-role', protect, async (req, res) => {
-  try {
-    const Membership = require('../models/Membership')
-    
-    // Super admins are effectively admins of all chamas
-    if (req.user?.isSuperAdmin) {
-      return res.json({ success: true, role: 'admin' })
-    }
-
-    const membership = await Membership.findOne({
-      userId: req.user.userId,
-      chamaId: req.params.chamaId,
-      status: 'active'
-    })
-    if (!membership) return res.status(404).json({ success: false, message: 'Not a member' })
-    res.json({ success: true, role: membership.role, membership })
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
-  }
-})
-
-router.get('/:chamaId/audit', protect, requireRole('admin', 'treasurer'), async (req, res) => { 
-  try { 
-    const logs = await AuditLog.find({ chamaId: req.params.chamaId }) 
-      .populate('performedBy', 'fullName email') 
-      .populate('targetUserId', 'fullName') 
-      .sort({ createdAt: -1 }) 
-      .limit(50) 
-    res.json({ success: true, logs }) 
-  } catch (err) { 
-    res.status(500).json({ success: false, message: err.message }) 
-  } 
-}) 
-
-router.get('/:chamaId/leaderboard', protect, async (req, res) => { 
-  try { 
-    const Membership = require('../models/Membership') 
-    const leaderboard = await Membership.find({ 
-      chamaId: req.params.chamaId, 
-      status: 'active' 
-    }) 
-    .populate('userId', 'fullName avatar') 
-    .sort({ totalContributed: -1 }) 
-    .limit(10) 
-    res.json({ success: true, leaderboard }) 
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message }) 
-  } 
-})
+router.get('/:chamaId/my-role', protect, getMyRole)
+router.get('/:chamaId/audit', protect, requireRole('admin', 'treasurer'), getAuditLogs)
+router.get('/:chamaId/leaderboard', protect, getLeaderboard)
 
 module.exports = router;

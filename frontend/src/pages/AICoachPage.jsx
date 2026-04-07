@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar'
 import api from '../services/api' 
 import useAuthStore from '../store/authStore' 
 import usePageTitle from '../hooks/usePageTitle' 
+import { getAiServiceUrl } from '../config/apiBase'
  
 // Get userId correctly from user object 
 const getUserId = (user) => { 
@@ -42,38 +43,6 @@ function ScoreGauge({ score }) {
     </div> 
   ) 
 } 
- function ScoreGauge({ score }) { 
-   const radius = 80 
-   const stroke = 10 
-   const normalizedRadius = radius - stroke * 2 
-   const circumference = normalizedRadius * 2 * Math.PI 
-   const strokeDashoffset = circumference - (score / 100) * circumference 
-   const color = score >= 80 ? '#10B981' : score >= 60 ? '#F59E0B' : score >= 40 ? '#EF4444' : '#7F1D1D' 
- 
-   return ( 
-     <div style={{ position: 'relative', width: '180px', height: '180px', margin: '0 auto' }}> 
-       <svg height={radius * 2} width={radius * 2} style={{ transform: 'rotate(-90deg)' }}> 
-         <circle stroke="rgba(255,255,255,0.08)" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx={radius} cy={radius} /> 
-         <circle 
-           stroke={color} 
-           fill="transparent" 
-           strokeWidth={stroke} 
-           strokeDasharray={`${circumference} ${circumference}`} 
-           strokeDashoffset={strokeDashoffset} 
-           strokeLinecap="round" 
-           r={normalizedRadius} 
-           cx={radius} 
-           cy={radius} 
-           style={{ transition: 'stroke-dashoffset 1s ease, stroke 0.5s ease', filter: `drop-shadow(0 0 8px ${color})` }} 
-         /> 
-       </svg> 
-       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}> 
-         <span style={{ fontFamily: 'Syne', fontSize: '42px', fontWeight: 800, color: '#F8FAFC' }}>{score}</span> 
-         <span style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B' }}>Credit Score</span> 
-       </div> 
-     </div> 
-   ) 
- } 
  
  function ScoreBar({ label, value, max, description }) { 
    const pct = Math.min((value / max) * 100, 100) 
@@ -107,10 +76,6 @@ function ScoreGauge({ score }) {
    const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const getUserId = (user) => {
-    return user?.id || user?._id || null
-  }
-
   // Fetch AI data
   const fetchAIData = async (chamaId) => {
     if (!chamaId || !user) return
@@ -127,6 +92,7 @@ function ScoreGauge({ score }) {
     }
 
     try {
+      const AI_URL = getAiServiceUrl()
       // First check if AI service is alive
       const healthCheck = await fetch(`${AI_URL}/health`, { signal: AbortSignal.timeout(10000) })
       if (!healthCheck.ok) throw new Error('AI service unavailable')

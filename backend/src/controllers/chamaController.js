@@ -331,6 +331,57 @@ const transferAdmin = async (req, res) => {
   }
 }
 
+const getMyRole = async (req, res) => {
+  try {
+    const { chamaId } = req.params
+    // Super admins are effectively admins of all chamas
+    if (req.user?.isSuperAdmin) {
+      return res.json({ success: true, role: 'admin' })
+    }
+
+    const membership = await Membership.findOne({
+      userId: req.user.userId,
+      chamaId,
+      status: 'active'
+    })
+    if (!membership) return res.status(404).json({ success: false, message: 'Not a member' })
+    res.json({ success: true, role: membership.role, membership })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+const getAuditLogs = async (req, res) => {
+  try {
+    const { chamaId } = req.params
+    const AuditLog = require('../models/AuditLog')
+    const logs = await AuditLog.find({ chamaId })
+      .populate('performedBy', 'fullName email')
+      .populate('targetUserId', 'fullName')
+      .sort({ createdAt: -1 })
+      .limit(50)
+    res.json({ success: true, logs })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+const getLeaderboard = async (req, res) => {
+  try {
+    const { chamaId } = req.params
+    const leaderboard = await Membership.find({
+      chamaId,
+      status: 'active'
+    })
+    .populate('userId', 'fullName avatar')
+    .sort({ totalContributed: -1 })
+    .limit(10)
+    res.json({ success: true, leaderboard })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
 module.exports = {
   createChama,
   getMyChamas,
@@ -341,5 +392,8 @@ module.exports = {
   changeMemberRole,
   removeMember,
   freezeChama,
-  transferAdmin
+  transferAdmin,
+  getMyRole,
+  getAuditLogs,
+  getLeaderboard
 };
