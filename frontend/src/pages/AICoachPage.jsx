@@ -1,12 +1,9 @@
-<<<<<<< HEAD
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
 import usePageTitle from '../hooks/usePageTitle'
-
-const AI_URL = import.meta.env.VITE_AI_URL || '/api/v1/ai'
 
 const getUserId = (user) => {
   return user?.id || user?._id || null
@@ -76,88 +73,6 @@ export default function AICoachPage() {
   const [healthData, setHealthData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-
-=======
-import { useState, useEffect } from 'react' 
-import { motion } from 'framer-motion' 
-import Sidebar from '../components/Sidebar' 
-import api from '../services/api' 
-import useAuthStore from '../store/authStore' 
-import usePageTitle from '../hooks/usePageTitle' 
-import { getAiServiceUrl } from '../config/apiBase'
- 
-// Get userId correctly from user object 
-const getUserId = (user) => { 
-  return user?.id || user?._id || null 
-} 
- 
-function ScoreGauge({ score }) { 
-  const radius = 80 
-  const stroke = 10 
-  const normalizedRadius = radius - stroke * 2 
-  const circumference = normalizedRadius * 2 * Math.PI 
-  const strokeDashoffset = circumference - (score / 100) * circumference 
-  const color = score >= 80 ? '#10B981' : score >= 60 ? '#F59E0B' : score >= 40 ? '#EF4444' : '#7F1D1D' 
- 
-  return ( 
-    <div style={{ position: 'relative', width: '180px', height: '180px', margin: '0 auto' }}> 
-      <svg height={radius * 2} width={radius * 2} style={{ transform: 'rotate(-90deg)' }}> 
-        <circle stroke="rgba(255,255,255,0.08)" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx={radius} cy={radius} /> 
-        <circle 
-          stroke={color} 
-          fill="transparent" 
-          strokeWidth={stroke} 
-          strokeDasharray={`${circumference} ${circumference}`} 
-          strokeDashoffset={strokeDashoffset} 
-          strokeLinecap="round" 
-          r={normalizedRadius} 
-          cx={radius} 
-          cy={radius} 
-          style={{ transition: 'stroke-dashoffset 1s ease, stroke 0.5s ease', filter: `drop-shadow(0 0 8px ${color})` }} 
-        /> 
-      </svg> 
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}> 
-        <span style={{ fontFamily: 'Syne', fontSize: '42px', fontWeight: 800, color: '#F8FAFC' }}>{score}</span> 
-        <span style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#64748B' }}>Credit Score</span> 
-      </div> 
-    </div> 
-  ) 
-} 
- 
- function ScoreBar({ label, value, max, description }) { 
-   const pct = Math.min((value / max) * 100, 100) 
-   const color = pct >= 70 ? '#10B981' : pct >= 40 ? '#F59E0B' : '#EF4444' 
-   return ( 
-     <div style={{ marginBottom: '20px' }}> 
-       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}> 
-         <span style={{ fontFamily: 'DM Sans', fontSize: '14px', color: '#F8FAFC' }}>{label}</span> 
-         <span style={{ fontFamily: 'Syne', fontSize: '14px', color, fontWeight: 600 }}>{value} / {max}</span> 
-       </div> 
-       <div style={{ height: '8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}> 
-         <motion.div 
-           initial={{ width: 0 }} 
-           animate={{ width: `${pct}%` }} 
-           transition={{ duration: 1, ease: 'easeOut' }} 
-           style={{ height: '100%', borderRadius: '4px', background: color, boxShadow: `0 0 8px ${color}` }} 
-         /> 
-       </div> 
-       {description && <p style={{ margin: '4px 0 0', fontFamily: 'DM Sans', fontSize: '12px', color: '#475569' }}>{description}</p>} 
-     </div> 
-   ) 
- } 
- 
- export default function AICoachPage() { 
-   usePageTitle('AI Coach') 
-   const { user } = useAuthStore() 
-   const [chamas, setChamas] = useState([]) 
-   const [selectedChama, setSelectedChama] = useState('') 
-   const [creditData, setCreditData] = useState(null) 
-   const [healthData, setHealthData] = useState(null) 
-   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  // Fetch AI data
->>>>>>> 5e2d1dc8fb9d002530eabc79032e294316b76d9d
   const fetchAIData = async (chamaId) => {
     if (!chamaId || !user) return
     setLoading(true)
@@ -173,15 +88,6 @@ function ScoreGauge({ score }) {
     }
 
     try {
-<<<<<<< HEAD
-=======
-      const AI_URL = getAiServiceUrl()
-      // First check if AI service is alive
-      const healthCheck = await fetch(`${AI_URL}/health`, { signal: AbortSignal.timeout(10000) })
-      if (!healthCheck.ok) throw new Error('AI service unavailable')
-
-      // Fetch credit score and group health in parallel
->>>>>>> 5e2d1dc8fb9d002530eabc79032e294316b76d9d
       const [scoreRes, groupRes] = await Promise.all([
         api.get(`/ai/credit-score/${userId}/${chamaId}`),
         api.get(`/ai/group-health/${chamaId}`)
