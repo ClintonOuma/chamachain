@@ -284,6 +284,31 @@ import { useState, useEffect } from 'react'
                        💳 Make Repayment
                      </button>
                    )}
+
+                   {/* Disbursement button for approved loans */}
+                   {loan.status === 'approved' && (
+                     <button
+                       onClick={async () => {
+                         const phone = prompt('Enter M-Pesa phone number (254...):', user.phone?.replace('+','') || '')
+                         if (!phone) return
+                         if (window.confirm(`Disburse KES ${loan.amount.toLocaleString()} to ${phone}?`)) {
+                           try {
+                             setLoading(true)
+                             await api.post('/mpesa/disburse', { loanId: loan._id, phone })
+                             alert('Loan disbursement initiated!')
+                             fetchAll()
+                           } catch (err) {
+                             alert(err.response?.data?.message || 'Disbursement failed')
+                           } finally {
+                             setLoading(false)
+                           }
+                         }
+                       }}
+                       className="btn-primary"
+                       style={{ width: '100%', background: '#10B981', boxShadow: '0 0 15px rgba(16,185,129,0.3)' }}>
+                       💸 Get Disbursement
+                     </button>
+                   )}
  
                    {/* Disbursement ref */}
                    {loan.mpesaDisbursementRef && (

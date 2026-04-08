@@ -252,6 +252,16 @@ const disburseLoan = async (req, res) => {
     if (!loan) return res.status(404).json({ success: false, message: 'Loan not found' })
     if (loan.status !== 'approved') return res.status(400).json({ success: false, message: 'Loan must be approved first' })
 
+    // Check permissions: only the borrower or an admin can disburse
+    const isBorrower = loan.userId.toString() === req.user.userId
+    let isAdmin = false
+    const membership = await Membership.findOne({ userId: req.user.userId, chamaId: loan.chamaId, status: 'active' })
+    if (membership && membership.role === 'admin') isAdmin = true
+
+    if (!isBorrower && !isAdmin && !req.user.isSuperAdmin) {
+      return res.status(403).json({ success: false, message: 'Not authorized to disburse this loan' })
+    }
+
     let disbursementRef = ''
 
     if (MPESA_ENV === 'sandbox') {

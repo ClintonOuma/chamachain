@@ -423,6 +423,42 @@ function LoansTab({ loans, myLoans, membership, chamaId, canRequestLoan, canAppr
                   >Reject</button>
                 </div>
               )}
+
+              {canApproveLoan && loan.status === 'approved' && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={async () => {
+                      const phone = prompt('Enter M-Pesa phone number to disburse to (254...):', loan.userId?.phone?.replace('+','') || '')
+                      if (!phone) return
+                      if (window.confirm(`Disburse KES ${loan.amount.toLocaleString()} to ${phone}?`)) {
+                        try {
+                          await api.post('/mpesa/disburse', { loanId: loan._id, phone })
+                          alert('Loan disbursed successfully!')
+                          window.location.reload()
+                        } catch (err) {
+                          alert(err.response?.data?.message || 'Disbursement failed')
+                        }
+                      }
+                    }}
+                    style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer' }}
+                  >Disburse Now</button>
+                  <button
+                    onClick={async () => {
+                      if (window.confirm('Mark this loan as disbursed manually (e.g. bank/cash)?')) {
+                        try {
+                          const ref = prompt('Enter manual reference (optional):') || 'MANUAL-' + Date.now()
+                          await api.patch(`/loans/loans/${loan._id}/manual-disburse`, { reference: ref })
+                          alert('Loan marked as disbursed manually!')
+                          window.location.reload()
+                        } catch (err) {
+                          alert(err.response?.data?.message || 'Action failed')
+                        }
+                      }
+                    }}
+                    style={{ background: 'rgba(14,165,233,0.15)', color: '#0EA5E9', border: '1px solid rgba(14,165,233,0.3)', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer' }}
+                  >Manual Disburse</button>
+                </div>
+              )}
             </div>
           </div>
         ))}
