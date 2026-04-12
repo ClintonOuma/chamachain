@@ -14,8 +14,13 @@ import React from 'react'
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(() => console.log('SW registered'))
-      .catch(() => console.log('SW registration failed'))
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(registration => {
+        console.log('SW registered with scope:', registration.scope)
+      })
+      .catch(err => {
+        console.log('SW registration failed:', err.message)
+        // Don't block app loading if SW fails
+      })
   })
 }

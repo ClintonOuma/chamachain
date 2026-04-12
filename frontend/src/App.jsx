@@ -31,12 +31,7 @@ import React, { useState, useEffect } from 'react'
    const [appLoading, setAppLoading] = useState(true) 
  
    useEffect(() => { 
-     // Signal to HTML pre-loader that React is ready
-     const preloader = document.getElementById('preloader')
-     if (preloader) preloader.style.display = 'none'
- 
-     // Short delay — HTML pre-loader already covers the real blank period during JS load
-     const timer = setTimeout(() => setAppLoading(false), 300) 
+     const timer = setTimeout(() => setAppLoading(false), 1200) 
      return () => clearTimeout(timer) 
    }, []) 
  
