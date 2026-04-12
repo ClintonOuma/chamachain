@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react' 
- import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom' 
- import useAuthStore from './store/authStore' 
- import LoadingScreen from './components/LoadingScreen' 
- import ErrorBoundary from './components/ErrorBoundary' 
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom' 
+import useAuthStore from './store/authStore' 
+import LoadingScreen from './components/LoadingScreen' 
+import ErrorBoundary from './components/ErrorBoundary' 
  
- import LandingPage from './pages/LandingPage' 
- import AuthPage from './pages/AuthPage'
- import DashboardPage from './pages/DashboardPage' 
- import ChamasPage from './pages/ChamasPage' 
- import ChamaDetailPage from './pages/ChamaDetailPage' 
- import ContributionsPage from './pages/ContributionsPage' 
- import LoansPage from './pages/LoansPage' 
- import AICoachPage from './pages/AICoachPage' 
- import NotificationsPage from './pages/NotificationsPage' 
- import ProfilePage from './pages/ProfilePage' 
- import JoinPage from './pages/JoinPage' 
- import SuperAdminPage from './pages/SuperAdminPage' 
+import LandingPage from './pages/LandingPage' 
+import AuthPage from './pages/AuthPage'
+import OAuthCallbackPage from './pages/OAuthCallbackPage'
+import DashboardPage from './pages/DashboardPage' 
+import ChamasPage from './pages/ChamasPage' 
+import ChamaDetailPage from './pages/ChamaDetailPage' 
+import ContributionsPage from './pages/ContributionsPage' 
+import LoansPage from './pages/LoansPage' 
+import AICoachPage from './pages/AICoachPage' 
+import NotificationsPage from './pages/NotificationsPage' 
+import ProfilePage from './pages/ProfilePage'
+import JoinPage from './pages/JoinPage'
+import SuperAdminPage from './pages/SuperAdminPage' 
  
  const ProtectedRoute = ({ children }) => { 
    const { isAuthenticated } = useAuthStore() 
@@ -44,9 +45,10 @@ import React, { useState, useEffect } from 'react'
          <Routes> 
            {/* Public */} 
            <Route path="/" element={<LandingPage />} /> 
-           <Route path="/login" element={<PublicRoute><AuthPage /></PublicRoute>} /> 
-           <Route path="/register" element={<PublicRoute><AuthPage /></PublicRoute>} /> 
-           <Route path="/join/:code" element={<JoinPage />} /> 
+           <Route path="/login" element={<PublicRoute><AuthPage /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><AuthPage /></PublicRoute>} />
+          <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+          <Route path="/join/:code" element={<JoinPage />} /> 
  
            {/* Protected */} 
            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} /> 

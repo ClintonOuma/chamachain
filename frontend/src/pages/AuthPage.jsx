@@ -6,6 +6,15 @@ import api from '../services/api'
 import useAuthStore from '../store/authStore'
 import usePageTitle from '../hooks/usePageTitle'
 
+const getApiOrigin = () => {
+  const fromVite = import.meta.env.VITE_API_URL
+  if (fromVite) return fromVite.replace(/\/$/, '')
+  if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__?.VITE_API_URL) {
+    return window.__RUNTIME_CONFIG__.VITE_API_URL.replace(/\/$/, '')
+  }
+  return ''
+}
+
 // Reusable SVG for Google Icon
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -707,7 +716,10 @@ export default function AuthPage() {
 
         {/* Google Button */}
         <button
-          onClick={() => alert('Google sign-in coming soon')}
+          onClick={() => {
+            const apiOrigin = getApiOrigin() || window.location.origin
+            window.location.href = `${apiOrigin}/api/v1/auth/google`
+          }}
           style={{
             width: '100%', height: '52px',
             background: '#1e1c2e', border: '1px solid rgba(255,255,255,0.05)',
