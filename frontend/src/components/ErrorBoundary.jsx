@@ -7,10 +7,12 @@ import { Component } from 'react'
    } 
  
    static getDerivedStateFromError(error) { 
+     console.log('ErrorBoundary: getDerivedStateFromError', error)
      return { hasError: true, error } 
    } 
  
    componentDidCatch(error, info) { 
+     console.log('ErrorBoundary: componentDidCatch', error, info)
      console.error('ErrorBoundary caught:', error, info) 
    } 
  

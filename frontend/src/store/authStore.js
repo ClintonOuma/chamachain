@@ -1,8 +1,14 @@
 import { create } from 'zustand'
 
 const useAuthStore = create((set) => {
-  const userData = localStorage.getItem('user')
-  const user = userData ? JSON.parse(userData) : null
+  let user = null
+  try {
+    const userData = localStorage.getItem('user')
+    user = userData ? JSON.parse(userData) : null
+  } catch (e) {
+    console.error('AuthStore: failed to parse user data', e)
+    localStorage.removeItem('user')
+  }
   const token = localStorage.getItem('accessToken') || null
 
   console.log('AuthStore init:', { user, hasToken: !!token, isSuperAdmin: user?.isSuperAdmin })
