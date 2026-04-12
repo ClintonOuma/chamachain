@@ -37,8 +37,60 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" /> 
   </head> 
   <body> 
-    <div id="root"></div> 
+    <div id="root">
+      <!-- Native pre-React loader: shows immediately, hidden once React mounts -->
+      <div id="pre-loader" style="
+        position:fixed;inset:0;
+        background:#0D0B1E;
+        display:flex;flex-direction:column;
+        align-items:center;justify-content:center;
+        z-index:99999;
+        font-family:'DM Sans',sans-serif;
+        transition:opacity 0.4s ease;
+      ">
+        <style>
+          @keyframes cc-spin{to{transform:rotate(360deg)}}
+          @keyframes cc-dot{0%,100%{opacity:.3;transform:translateY(0)} 50%{opacity:1;transform:translateY(-4px)}}
+          @keyframes cc-fade{from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)}}
+          #pre-loader h1{animation:cc-fade .7s ease forwards;opacity:0;background:linear-gradient(to bottom,#fff,#94A3B8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:32px;font-weight:800;letter-spacing:-0.02em;margin:0 0 12px;font-family:'Syne','DM Sans',sans-serif}
+          #pre-loader p{animation:cc-fade .7s .3s ease forwards;opacity:0;font-size:13px;color:#64748B;letter-spacing:.08em;text-transform:uppercase;margin:16px 0 0}
+          .cc-spinner{width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:24px;animation:cc-spin 3s linear infinite}
+          .cc-dot-row{display:flex;gap:5px;margin-top:10px}
+          .cc-dot-row span{width:4px;height:4px;border-radius:50%;background:#0EA5E9;animation:cc-dot 1s ease infinite}
+          .cc-dot-row span:nth-child(2){animation-delay:.2s}
+          .cc-dot-row span:nth-child(3){animation-delay:.4s}
+          /* Glow blobs */
+          .cc-blob1{position:absolute;top:-10%;right:-10%;width:400px;height:400px;background:radial-gradient(circle,rgba(14,165,233,.12) 0%,transparent 70%);filter:blur(60px);pointer-events:none}
+          .cc-blob2{position:absolute;bottom:-15%;left:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(139,92,246,.1) 0%,transparent 70%);filter:blur(80px);pointer-events:none}
+        </style>
+        <div class="cc-blob1"></div>
+        <div class="cc-blob2"></div>
+        <div class="cc-spinner">
+          <div style="width:10px;height:10px;border-radius:50%;background:#0EA5E9;box-shadow:0 0 12px #0EA5E9"></div>
+        </div>
+        <h1>ChamaChain</h1>
+        <div class="cc-dot-row"><span></span><span></span><span></span></div>
+        <p>Initializing Secure Environment</p>
+      </div>
+    </div>
     <script src="/runtime-config.js"></script>
-    <script type="module" src="/src/main.jsx"></script> 
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Hide native loader once React app root has real content
+      (function() {
+        var obs = new MutationObserver(function() {
+          var root = document.getElementById('root');
+          var loader = document.getElementById('pre-loader');
+          if (!loader) { obs.disconnect(); return; }
+          // React renders into #root — when children beyond #pre-loader appear, hide it
+          if (root && root.childElementCount > 1) {
+            loader.style.opacity = '0';
+            setTimeout(function(){ loader.remove(); }, 450);
+            obs.disconnect();
+          }
+        });
+        obs.observe(document.getElementById('root'), { childList: true, subtree: false });
+      })();
+    </script>
   </body> 
 </html> 
