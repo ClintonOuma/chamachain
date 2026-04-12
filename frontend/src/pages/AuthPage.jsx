@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2, X, CheckCircle2, XCircle } from 'lucide-react'
@@ -515,17 +515,24 @@ export default function AuthPage() {
   
   // Determine active tab from URL
   const isLogin = location.pathname === '/login'
-  usePageTitle(isLogin ? 'Sign In' : 'Create Account')
-  const [activeTab, setActiveTab] = useState(isLogin ? 'login' : 'register')
-  const [error, setError] = useState('')
-
-  // Sync tab with URL changes
-  const switchTab = useCallback((tab) => {
-    setActiveTab(tab)
-    setError('')
-    // Update URL without full page navigation
-    window.history.replaceState(null, '', tab === 'login' ? '/login' : '/register')
-  }, [])
+   usePageTitle(isLogin ? 'Sign In' : 'Create Account')
+   const [activeTab, setActiveTab] = useState(isLogin ? 'login' : 'register')
+   const [error, setError] = useState('')
+ 
+   // Sync tab with URL changes (e.g. browser back button)
+   useEffect(() => {
+     const tab = location.pathname === '/login' ? 'login' : 'register'
+     setActiveTab(tab)
+     setError('')
+   }, [location.pathname])
+ 
+   // Sync tab with URL changes
+   const switchTab = useCallback((tab) => {
+     setActiveTab(tab)
+     setError('')
+     // Update URL without full page navigation
+     navigate(tab === 'login' ? '/login' : '/register', { replace: true })
+   }, [navigate])
 
   const handleSuccess = useCallback((user, accessToken, refreshToken) => {
     setAuth(user, accessToken, refreshToken)

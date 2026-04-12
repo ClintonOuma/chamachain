@@ -5,8 +5,7 @@ import React, { useState, useEffect } from 'react'
  import ErrorBoundary from './components/ErrorBoundary' 
  
  import LandingPage from './pages/LandingPage' 
- import LoginPage from './pages/LoginPage' 
- import RegisterPage from './pages/RegisterPage' 
+ import AuthPage from './pages/AuthPage'
  import DashboardPage from './pages/DashboardPage' 
  import ChamasPage from './pages/ChamasPage' 
  import ChamaDetailPage from './pages/ChamaDetailPage' 
@@ -45,8 +44,8 @@ import React, { useState, useEffect } from 'react'
          <Routes> 
            {/* Public */} 
            <Route path="/" element={<LandingPage />} /> 
-           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} /> 
-           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} /> 
+           <Route path="/login" element={<PublicRoute><AuthPage /></PublicRoute>} /> 
+           <Route path="/register" element={<PublicRoute><AuthPage /></PublicRoute>} /> 
            <Route path="/join/:code" element={<JoinPage />} /> 
  
            {/* Protected */} 
