@@ -1,67 +1,11 @@
 import { useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bot, ShieldCheck, Smartphone, Users, TrendingUp, Activity, Star, ArrowRight, Zap } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import usePageTitle from '../hooks/usePageTitle'
 
-/* ─────────────────────────────────────────────────────────────────
-   INJECT KEYFRAMES + FONTS
-───────────────────────────────────────────────────────────────── */
-const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&display=swap');
-
-  @keyframes floatA {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-12px); }
-  }
-  @keyframes floatB {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-8px); }
-  }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.5; }
-  }
-  @keyframes shimmer-line {
-    0%   { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: #000000;
-    color: #F8FAFC;
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  .lp-wrapper {
-    min-height: 100vh;
-    background: linear-gradient(160deg, #000000 0%, #0a0a0f 30%, #0d0d14 50%, #08080c 75%, #000000 100%);
-    color: #F8FAFC;
-    font-family: 'DM Sans', sans-serif;
-    position: relative;
-    overflow-x: hidden;
-  }
-
-  /* Gradient text utility */
-  .grad-text {
-    background: linear-gradient(135deg, #4ac3ff 0%, #00d4aa 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .grad-text-alt {
-    background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-`
+/* Styles are now in global.css — no dynamic injection needed */
 
 /* ─────────────────────────────────────────────────────────────────
    GLASS HELPERS - Apple Liquid Glass Style
@@ -147,17 +91,8 @@ export default function LandingPage() {
   const { isAuthenticated } = useAuthStore()
   usePageTitle('AI-Powered Digital Chama Platform')
 
-  useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard')
-  }, [isAuthenticated, navigate])
-
-  useEffect(() => {
-    const el = document.createElement('style')
-    el.id = '__lp_styles'
-    el.textContent = GLOBAL_CSS
-    if (!document.getElementById('__lp_styles')) document.head.appendChild(el)
-    return () => el.remove()
-  }, [])
+  // If already logged in, send straight to dashboard
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
   const scrollToFeatures = () => {
     document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
