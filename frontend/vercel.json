@@ -4,6 +4,9 @@
       "VITE_API_URL": "https://chamachain-backend.onrender.com"
     }
   },
+  "routes": [
+    { "src": "/[^.]+", "dest": "/index.html" }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
