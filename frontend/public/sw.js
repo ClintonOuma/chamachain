@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chamachain-v2'
+const CACHE_NAME = 'chamachain-v3'
 const STATIC_ASSETS = [
   '/',
   '/index.html'
@@ -33,17 +33,33 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
     return
   }
-  
+
+  // For navigation requests (page loads), use network-first strategy
+  // This ensures the landing page and all routes always get fresh content
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Cache the fresh response for offline fallback
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+          return response
+        })
+        .catch(() => {
+          // Only fall back to cache if network fails (offline)
+          return caches.match('/index.html')
+        })
+    )
+    return
+  }
+
+  // For other assets (JS, CSS, images), use cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) {
         return cached
       }
       return fetch(event.request).catch(() => {
-        // If fetch fails, try to return cached index.html for navigation
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html')
-        }
         throw new Error('Network request failed')
       })
     })

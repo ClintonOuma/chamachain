@@ -44,7 +44,7 @@ import SuperAdminPage from './pages/SuperAdminPage'
          <div className="mesh-bg" /> 
          <Routes> 
            {/* Public */} 
-           <Route path="/" element={<LandingPage />} /> 
+           <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} /> 
            <Route path="/login" element={<PublicRoute><AuthPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><AuthPage /></PublicRoute>} />
           <Route path="/oauth/callback" element={<OAuthCallbackPage />} />

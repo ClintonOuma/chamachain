@@ -1,8 +1,6 @@
-import { useEffect } from 'react'
-import { Link, useNavigate, Navigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bot, ShieldCheck, Smartphone, Users, TrendingUp, Activity, Star, ArrowRight, Zap } from 'lucide-react'
-import useAuthStore from '../store/authStore'
 import usePageTitle from '../hooks/usePageTitle'
 
 /* Styles are now in global.css — no dynamic injection needed */
@@ -88,11 +86,7 @@ const memberInitials = ['AM', 'JW', 'FO']
 ───────────────────────────────────────────────────────────────── */
 export default function LandingPage() {
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuthStore()
   usePageTitle('AI-Powered Digital Chama Platform')
-
-  // If already logged in, send straight to dashboard
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
   const scrollToFeatures = () => {
     document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
