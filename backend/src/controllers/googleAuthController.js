@@ -3,13 +3,18 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateTokens');
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:4000/api/v1/auth/google/callback';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const getGoogleConfig = () => ({
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:4000/api/v1/auth/google/callback',
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173'
+});
 
 const googleAuthStart = (req, res) => {
+  const { GOOGLE_CLIENT_ID, GOOGLE_CALLBACK_URL } = getGoogleConfig();
+
   if (!GOOGLE_CLIENT_ID) {
+    console.error('GOOGLE_CLIENT_ID not set. Available env keys:', Object.keys(process.env).filter(k => k.includes('GOOGLE') || k.includes('CLIENT')));
     return res.status(500).json({ success: false, message: 'Google OAuth not configured' });
   }
 
@@ -30,6 +35,8 @@ const googleAuthStart = (req, res) => {
 };
 
 const googleAuthCallback = async (req, res) => {
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL, FRONTEND_URL } = getGoogleConfig();
+
   try {
     const { code } = req.query;
 
