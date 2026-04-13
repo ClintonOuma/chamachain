@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ChamaChain — Entity Relationship Diagram</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .container {
+    width: 1000px;
+    background: rgba(13, 13, 20, 0.95);
+    padding: 40px;
+    border-radius: 20px;
+    position: relative;
+  }
+  .table {
+    width: 220px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    position: absolute;
+  }
+  .table-header {
+    background: #334155;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+  .table-row {
+    padding: 6px 12px;
+    font-size: 11px;
+    color: #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .pk { color: #fbbf24; font-weight: bold; }
+  .fk { color: #60a5fa; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1 style="color:#fff; text-align:center; font-size:16px; margin-bottom:100px;">ERD: Core Database Schema</h1>
+    
+    <!-- User Table -->
+    <div class="table" style="top:100px; left:40px;">
+        <div class="table-header" style="background:#1e40af;">User</div>
+        <div class="table-row"><span class="pk">ID</span><span>ObjectId</span></div>
+        <div class="table-row"><span>fullName</span><span>String</span></div>
+        <div class="table-row"><span>email</span><span>String</span></div>
+        <div class="table-row"><span>phone</span><span>String</span></div>
+        <div class="table-row"><span>isSuperAdmin</span><span>Bool</span></div>
+    </div>
+    
+    <!-- Chama Table -->
+    <div class="table" style="top:100px; right:40px;">
+        <div class="table-header" style="background:#065f46;">Chama</div>
+        <div class="table-row"><span class="pk">ID</span><span>ObjectId</span></div>
+        <div class="table-row"><span>name</span><span>String</span></div>
+        <div class="table-row"><span>inviteCode</span><span>String</span></div>
+        <div class="table-row"><span class="fk">createdBy</span><span>UserRef</span></div>
+        <div class="table-row"><span>totalBalance</span><span>Number</span></div>
+    </div>
+    
+    <!-- Membership Table -->
+    <div class="table" style="top:250px; left:390px;">
+        <div class="table-header" style="background:#5b21b6;">Membership</div>
+        <div class="table-row"><span class="pk">ID</span><span>ObjectId</span></div>
+        <div class="table-row"><span class="fk">userId</span><span>UserRef</span></div>
+        <div class="table-row"><span class="fk">chamaId</span><span>ChamaRef</span></div>
+        <div class="table-row"><span>role</span><span>String</span></div>
+        <div class="table-row"><span>status</span><span>String</span></div>
+    </div>
+    
+    <!-- Contribution Table -->
+    <div class="table" style="bottom:40px; left:40px;">
+        <div class="table-header" style="background:#92400e;">Contribution</div>
+        <div class="table-row"><span class="pk">ID</span><span>ObjectId</span></div>
+        <div class="table-row"><span class="fk">userId</span><span>UserRef</span></div>
+        <div class="table-row"><span class="fk">chamaId</span><span>ChamaRef</span></div>
+        <div class="table-row"><span>amount</span><span>Number</span></div>
+        <div class="table-row"><span>status</span><span>String</span></div>
+    </div>
+    
+    <!-- Loan Table -->
+    <div class="table" style="bottom:40px; right:40px;">
+        <div class="table-header" style="background:#991b1b;">Loan</div>
+        <div class="table-row"><span class="pk">ID</span><span>ObjectId</span></div>
+        <div class="table-row"><span class="fk">userId</span><span>UserRef</span></div>
+        <div class="table-row"><span class="fk">chamaId</span><span>ChamaRef</span></div>
+        <div class="table-row"><span>amount</span><span>Number</span></div>
+        <div class="table-row"><span>status</span><span>String</span></div>
+    </div>
+    
+    <!-- SVG Connections could go here, but positioning is clear for presentation -->
+</div>
+</body>
+</html>

@@ -18,21 +18,36 @@ import useMyRole from '../hooks/useMyRole'
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
+// ─── Design tokens aligned with global.css Apple Liquid Glass system ─────────
 const CARD = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '20px',
+  background: 'var(--glass-surface)',
+  border: '1px solid var(--glass-border)',
+  borderRadius: 'var(--radius-xl)',
   padding: '24px',
+  backdropFilter: 'var(--glass-blur)',
+  WebkitBackdropFilter: 'var(--glass-blur)',
+  boxShadow: 'var(--specular-edge), var(--glass-shadow)',
 }
 
 const BTN_PRIMARY = {
-  background: '#0EA5E9', color: '#FFF', border: 'none', borderRadius: '12px',
-  fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: '15px',
-  padding: '10px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-  boxShadow: '0 0 20px rgba(14,165,233,0.3)',
+  background: 'linear-gradient(180deg, rgba(74,195,255,0.85) 0%, rgba(74,195,255,0.65) 100%)',
+  color: 'rgba(255,255,255,0.95)',
+  border: '1px solid rgba(74,195,255,0.45)',
+  borderRadius: 'var(--radius-md)',
+  fontFamily: 'inherit',
+  fontWeight: 600,
+  fontSize: '14px',
+  padding: '10px 20px',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '6px',
+  backdropFilter: 'blur(12px)',
+  boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.4), 0 0 20px rgba(74,195,255,0.2), 0 4px 12px rgba(0,0,0,0.2)',
+  letterSpacing: '-0.01em',
 }
 
-const ROLE_COLOR = { Admin: '#F59E0B', Treasurer: '#0EA5E9', Member: '#8B5CF6', Observer: '#64748B' }
+const ROLE_COLOR = { Admin: '#ffd60a', Treasurer: '#4ac3ff', Member: '#5e5ce6', Observer: 'rgba(255,255,255,0.35)' }
 const BADGE_ROLE_COLOR_MAP = { admin: 'gold', treasurer: 'blue', member: 'purple', observer: 'gray' }
 
 function avatarBg(name = '') {
@@ -970,36 +985,73 @@ export default function ChamaDetailPage() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0D0B1E' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-base)' }}>
       <div className="mesh-bg" />
       <Sidebar />
-      <main className="main-content" style={{ marginLeft: '240px', flex: 1, padding: '32px', position: 'relative', zIndex: 1, overflowY: 'auto', minHeight: '100vh' }}>
+      <main className="main-content" style={{ marginLeft: '240px', flex: 1, padding: '28px 32px', position: 'relative', zIndex: 1, overflowY: 'auto', minHeight: '100vh' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button onClick={() => navigate('/chamas')} style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid rgba(255,255,255,0.18)', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.8)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.35), 0 4px 16px rgba(0,0,0,0.2)', transition: 'all 0.25s ease' }}>
-              <ArrowLeft size={18} />
+        {/* ── Header ─────────────────────────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+
+          {/* Left: back + title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              onClick={() => navigate('/chamas')}
+              style={{
+                background: 'var(--glass-surface)',
+                backdropFilter: 'var(--glass-blur)',
+                WebkitBackdropFilter: 'var(--glass-blur)',
+                border: '1px solid var(--glass-border)',
+                width: '38px', height: '38px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--text-secondary)',
+                boxShadow: 'var(--specular-top)',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <ArrowLeft size={16} />
             </button>
-            <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '32px', fontWeight: 700, margin: 0, color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {chama?.name}
-              {role && <Badge label={role.charAt(0).toUpperCase() + role.slice(1)} color={BADGE_ROLE_COLOR_MAP[role] || 'gray'} />}
-            </h1>
+
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h1 style={{ fontSize: '22px', fontWeight: 700, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                  {chama?.name}
+                </h1>
+                {role && (
+                  <span style={{
+                    fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                    padding: '3px 10px', borderRadius: '20px',
+                    background: 'rgba(74,195,255,0.12)', color: 'var(--accent-blue)',
+                    border: '1px solid rgba(74,195,255,0.2)',
+                  }}>
+                    {role}
+                  </span>
+                )}
+              </div>
+              <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                {members.length} member{members.length !== 1 ? 's' : ''} · KES {(chama?.totalBalance || 0).toLocaleString()} balance
+              </p>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {membership && (
-              <span style={{
-                background: `${ROLE_COLOR[membership.role.charAt(0).toUpperCase() + membership.role.slice(1)] || '#64748B'}22`,
-                color: ROLE_COLOR[membership.role.charAt(0).toUpperCase() + membership.role.slice(1)] || '#64748B',
-                padding: '4px 10px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontFamily: 'DM Sans',
-                fontWeight: 600,
-                textTransform: 'capitalize'
-              }}>{membership.role}</span>
+
+          {/* Right: quick actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {canContribute && (
+              <button style={BTN_PRIMARY} onClick={() => setShowContribute(true)}>
+                <Plus size={15} /> Contribute
+              </button>
             )}
-            <button style={BTN_PRIMARY} onClick={() => setShowContribute(true)}><Plus size={16} />Fund Account</button>
+            {canRequestLoan && (
+              <button
+                className="btn-ghost"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px' }}
+                onClick={() => setShowLoan(true)}
+              >
+                <CreditCard size={15} /> Request Loan
+              </button>
+            )}
           </div>
         </div>
 
@@ -1027,30 +1079,45 @@ export default function ChamaDetailPage() {
           </div>
         )}
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '32px' }}>
+        {/* ── Tabs ─────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', gap: '6px',
+          background: 'var(--glass-surface)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '5px',
+          marginBottom: '24px',
+          backdropFilter: 'var(--glass-blur)',
+          WebkitBackdropFilter: 'var(--glass-blur)',
+          overflowX: 'auto',
+        }}>
           {TABS.map((tab, i) => (
             <motion.button
               key={tab.name}
               onClick={() => setActiveTab(i)}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.97 }}
               style={{
-                background: 'transparent',
-                border: 'none',
-                padding: '12px 20px',
+                background: activeTab === i
+                  ? 'linear-gradient(180deg, rgba(74,195,255,0.2) 0%, rgba(74,195,255,0.1) 100%)'
+                  : 'transparent',
+                border: activeTab === i ? '1px solid rgba(74,195,255,0.3)' : '1px solid transparent',
+                borderRadius: 'var(--radius-md)',
+                padding: '8px 16px',
                 cursor: 'pointer',
-                fontSize: '16px',
+                fontSize: '13px',
                 fontWeight: 600,
-                color: activeTab === i ? '#0EA5E9' : '#64748B',
-                borderBottom: activeTab === i ? '2px solid #0EA5E9' : '2px solid transparent',
+                color: activeTab === i ? 'var(--accent-blue)' : 'var(--text-secondary)',
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '6px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                boxShadow: activeTab === i ? 'inset 0 0.5px 0 rgba(255,255,255,0.2)' : 'none',
               }}
             >
-              <tab.icon size={18} /> {tab.name}
+              <tab.icon size={15} />
+              {tab.name}
             </motion.button>
           ))}
         </div>
@@ -1099,6 +1166,25 @@ export default function ChamaDetailPage() {
             setSelectedLoanId(null)
           }} />
         )}
+
+        {/* ── Creator credit ──────────────────────────── */}
+        <div style={{
+          marginTop: '48px',
+          paddingTop: '20px',
+          borderTop: '1px solid var(--glass-border)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '8px',
+        }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>Built with ♥ by</span>
+          <span style={{
+            fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em',
+            background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-indigo))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>Clichy</span>
+        </div>
 
       </main>
     </div>
